@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sistema de Inspección de Plumillas — Flota</title>
+<title>Sistema de Gestión de Mantenimiento Industrial -- Pacasmayo</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
+/* Fuentes del sistema -- sin necesidad de internet */
 :root{
   --red:#cc1a1a;--red-dark:#a01414;--bg:#f4f5f7;--surface:#fff;
   --surface2:#f0f1f3;--border:#d0d3d9;--border-strong:#b0b5bf;
@@ -18,7 +19,7 @@
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
 .header{background:#1a1d23;border-bottom:3px solid var(--red);padding:0 40px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;height:64px;box-shadow:0 2px 12px rgba(0,0,0,.25);}
 .logo{display:flex;align-items:center;gap:20px;}
-.logo-icon{width:40px;height:40px;background:var(--red);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.logo img{height:40px;width:auto;display:block;}
 .logo-divider{width:1px;height:32px;background:rgba(255,255,255,.15);}
 .logo-text h1{font-size:16px;font-weight:700;letter-spacing:.8px;color:#fff;text-transform:uppercase;line-height:1.2;}
 .logo-text span{font-size:10px;color:rgba(255,255,255,.45);letter-spacing:2px;text-transform:uppercase;}
@@ -44,10 +45,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;ba
 .stat-card.c-green::before{background:var(--green);}.stat-card.c-orange::before{background:var(--orange);}
 .stat-card.c-gray::before{background:#6a7080;}
 .stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
-.stat-icon{width:44px;height:44px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
-.stat-card.c-red .stat-icon{background:rgba(204,26,26,.08);}.stat-card.c-blue .stat-icon{background:rgba(26,95,160,.08);}
-.stat-card.c-green .stat-icon{background:rgba(26,122,69,.08);}.stat-card.c-orange .stat-icon{background:rgba(192,96,16,.08);}
-.stat-card.c-gray .stat-icon{background:rgba(106,112,128,.08);}
+.stat-icon{width:44px;height:44px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:"Courier New",Courier,monospace;font-size:10px;font-weight:600;flex-shrink:0;}
+.stat-card.c-red .stat-icon{background:rgba(204,26,26,.08);color:var(--red);}
+.stat-card.c-blue .stat-icon{background:rgba(26,95,160,.08);color:var(--blue);}
+.stat-card.c-green .stat-icon{background:rgba(26,122,69,.08);color:var(--green);}
+.stat-card.c-orange .stat-icon{background:rgba(192,96,16,.08);color:var(--orange);}
+.stat-card.c-gray .stat-icon{background:rgba(106,112,128,.08);color:#6a7080;}
 .stat-num{font-family:"Courier New",Courier,monospace;font-size:26px;font-weight:600;line-height:1;}
 .stat-card.c-red .stat-num{color:var(--red);}.stat-card.c-blue .stat-num{color:var(--blue);}
 .stat-card.c-green .stat-num{color:var(--green);}.stat-card.c-orange .stat-num{color:var(--orange);}
@@ -84,33 +87,24 @@ tr:hover td{background:rgba(0,0,0,.015);}
 .form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
 .form-group{display:flex;flex-direction:column;gap:5px;}
 .form-group.full{grid-column:1/-1;}
-.form-group.half{grid-column:span 2;}
 label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text2);}
 input,select,textarea{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:9px 12px;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;font-size:14px;transition:border-color .15s,box-shadow .15s;outline:none;}
 input:focus,select:focus,textarea:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(204,26,26,.08);}
+select option{background:var(--surface);}
 textarea{resize:vertical;min-height:80px;line-height:1.6;}
 hr.fdiv{grid-column:1/-1;border:none;border-top:1px solid var(--border);margin:8px 0;}
-
-/* CRITERIOS GRID */
-.criterios-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:8px;}
-.criterio-row{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.criterio-label{font-size:12px;font-weight:600;color:var(--text);flex:1;}
-.criterio-code{font-family:"Courier New",Courier,monospace;font-size:10px;color:var(--text3);margin-right:8px;min-width:36px;}
-.criterio-select{width:90px;padding:5px 8px;font-size:12px;font-weight:700;border:1px solid var(--border);border-radius:3px;background:var(--surface);}
-.criterio-select.val-B{border-color:var(--green);color:var(--green);background:rgba(26,122,69,.06);}
-.criterio-select.val-R{border-color:var(--orange);color:var(--orange);background:rgba(192,96,16,.06);}
-.criterio-select.val-M{border-color:var(--red);color:var(--red);background:rgba(204,26,26,.06);}
-.criterio-select.val-NA{border-color:#aaa;color:#6a7080;background:var(--surface2);}
-
-/* PRIORIDAD BUTTONS */
-.prioridad-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
-.prio-btn{padding:10px 8px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .15s;text-align:center;}
-.prio-btn:hover{border-color:var(--blue);color:var(--blue);background:rgba(26,95,160,.06);}
-.prio-btn.selected.p-critico{border-color:var(--red);background:rgba(204,26,26,.1);color:var(--red);}
-.prio-btn.selected.p-urgente{border-color:#c06010;background:rgba(192,96,16,.1);color:#c06010;}
-.prio-btn.selected.p-moderado{border-color:#b8860b;background:rgba(184,134,11,.1);color:#b8860b;}
-.prio-btn.selected.p-normal{border-color:var(--green);background:rgba(26,122,69,.1);color:var(--green);}
-
+.tipo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.tipo-btn{padding:10px 8px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .15s;text-align:center;}
+.tipo-btn:hover{border-color:var(--blue);color:var(--blue);background:rgba(26,95,160,.06);}
+.tipo-btn.selected{border-color:var(--red);background:rgba(204,26,26,.08);color:var(--red);}
+.btn-row{display:flex;gap:10px;margin-top:24px;justify-content:flex-end;border-top:1px solid var(--border);padding-top:20px;flex-wrap:wrap;}
+.btn{padding:10px 24px;border-radius:4px;border:none;cursor:pointer;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;transition:all .15s;}
+.btn-primary{background:var(--red);color:#fff;}
+.btn-primary:hover{background:var(--red-dark);box-shadow:0 3px 12px rgba(204,26,26,.3);}
+.btn-secondary{background:var(--surface2);color:var(--text2);border:1px solid var(--border);}
+.btn-secondary:hover{color:var(--text);border-color:var(--border-strong);}
+.btn-sql{background:rgba(26,95,160,.08);color:var(--blue);border:1px solid rgba(26,95,160,.3);}
+.btn-sql:hover{background:rgba(26,95,160,.14);}
 .obs-section{border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-top:4px;}
 .obs-header{background:var(--surface2);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
 .obs-title{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);}
@@ -123,7 +117,7 @@ hr.fdiv{grid-column:1/-1;border:none;border-top:1px solid var(--border);margin:8
 .obs-textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:12px 14px;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;font-size:14px;line-height:1.7;resize:vertical;min-height:90px;outline:none;transition:border-color .15s;}
 .obs-textarea:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(204,26,26,.08);}
 .obs-meta{display:flex;gap:14px;margin-top:12px;flex-wrap:wrap;}
-.obs-meta input{flex:1;min-width:160px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:8px 12px;color:var(--text);font-family:-apple-system;font-size:13px;outline:none;}
+.obs-meta input{flex:1;min-width:160px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:8px 12px;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;font-size:13px;outline:none;}
 .photo-upload-area{border:2px dashed var(--border);border-radius:6px;padding:20px;text-align:center;cursor:pointer;transition:all .15s;background:var(--surface2);position:relative;}
 .photo-upload-area:hover,.photo-upload-area.dragover{border-color:var(--blue);background:rgba(26,95,160,.04);}
 .photo-upload-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
@@ -143,12 +137,15 @@ hr.fdiv{grid-column:1/-1;border:none;border-top:1px solid var(--border);margin:8
 .cal-day.has-event{border-color:var(--orange);}
 .cal-day.today{border-color:var(--blue);background:rgba(26,95,160,.04);color:var(--text);font-weight:700;}
 .cal-event{background:rgba(192,96,16,.1);border-left:2px solid var(--orange);padding:2px 5px;font-size:9px;color:var(--orange);margin-top:3px;border-radius:2px;text-transform:uppercase;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.cal-event.operativa{background:rgba(26,122,69,.1);border-left-color:var(--green);color:var(--green);}
-.cal-event.critico{background:rgba(204,26,26,.1);border-left-color:var(--red);color:var(--red);}
+.cal-event.out{background:rgba(204,26,26,.1);border-left-color:var(--red);color:var(--red);}
+.cal-event.done{background:rgba(26,122,69,.1);border-left-color:var(--green);color:var(--green);}
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;}
 .modal-overlay.show{display:flex;}
-.detail-modal{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:28px;max-width:960px;width:95%;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.2);}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:28px;max-width:820px;width:92%;max-height:85vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.2);}
+.detail-modal{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:28px;max-width:900px;width:94%;max-height:88vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.2);}
 .modal-title{font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text);margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.code-block{background:#0d1117;border:1px solid #2a3040;border-radius:6px;padding:18px;font-family:"Courier New",Courier,monospace;font-size:12px;color:#7dd3fc;line-height:1.9;overflow-x:auto;white-space:pre;margin-bottom:16px;}
+.code-comment{color:#4a5568;}.code-key{color:#f472b6;}.code-val{color:#86efac;}
 .detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
 .detail-field{background:var(--surface2);border-radius:4px;padding:11px 13px;border:1px solid var(--border);}
 .df-label{font-size:9px;letter-spacing:1.5px;color:var(--text2);font-weight:700;text-transform:uppercase;margin-bottom:4px;}
@@ -176,6 +173,7 @@ hr.fdiv{grid-column:1/-1;border:none;border-top:1px solid var(--border);margin:8
 .bar-track{flex:1;background:var(--surface2);border-radius:3px;height:22px;overflow:hidden;border:1px solid var(--border);}
 .bar-fill{height:100%;border-radius:2px;display:flex;align-items:center;padding-left:8px;font-size:11px;font-weight:700;color:#fff;min-width:28px;transition:width .6s ease;}
 .bar-val{font-size:11px;font-weight:700;color:var(--text);min-width:28px;font-family:"Courier New",Courier,monospace;}
+/* OBSERVACIONES FEED */
 .obs-feed{display:flex;flex-direction:column;gap:14px;}
 .obs-card{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--blue);border-radius:6px;padding:18px;box-shadow:var(--shadow);}
 .obs-card.c-CRITICO{border-left-color:var(--red);}
@@ -184,32 +182,44 @@ hr.fdiv{grid-column:1/-1;border:none;border-top:1px solid var(--border);margin:8
 .obs-card-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
 .obs-card-motivo{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:10px 14px;margin-bottom:10px;}
 .obs-card-motivo-label{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);margin-bottom:4px;}
+.obs-card-motivo-cat{font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.obs-card-motivo-text{font-size:13px;color:var(--text);line-height:1.6;}
 .obs-card-obs{background:rgba(26,95,160,.04);border:1px solid rgba(26,95,160,.15);border-radius:4px;padding:10px 14px;margin-bottom:10px;}
 .obs-card-obs.c-CRITICO{background:rgba(204,26,26,.04);border-color:rgba(204,26,26,.15);}
 .obs-card-obs.c-ADVERTENCIA{background:rgba(192,96,16,.04);border-color:rgba(192,96,16,.15);}
 .obs-card-meta{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text2);border-top:1px solid var(--border);padding-top:10px;}
-.btn-row{display:flex;gap:10px;margin-top:24px;justify-content:flex-end;border-top:1px solid var(--border);padding-top:20px;flex-wrap:wrap;}
-.btn{padding:10px 24px;border-radius:4px;border:none;cursor:pointer;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;transition:all .15s;}
-.btn-primary{background:var(--red);color:#fff;}
-.btn-primary:hover{background:var(--red-dark);box-shadow:0 3px 12px rgba(204,26,26,.3);}
-.btn-secondary{background:var(--surface2);color:var(--text2);border:1px solid var(--border);}
-.btn-secondary:hover{color:var(--text);border-color:var(--border-strong);}
-.btn-sql{background:rgba(26,95,160,.08);color:var(--blue);border:1px solid rgba(26,95,160,.3);}
-.btn-sql:hover{background:rgba(26,95,160,.14);}
+.obs-card-meta strong{color:var(--text);}
+/* GUIDE */
+.guide-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:24px;}
+.guide-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:22px;box-shadow:var(--shadow);}
+.guide-card h3{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:16px;}
+.gstep{display:flex;gap:12px;margin-bottom:12px;align-items:flex-start;}
+.gstep-num{min-width:22px;height:22px;background:var(--red);color:#fff;border-radius:3px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0;margin-top:2px;}
+.gstep-text{font-size:13px;color:var(--text2);line-height:1.6;}
+.gstep-text strong{color:var(--text);}
+.gstep-text code{background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:1px 6px;font-family:"Courier New",Courier,monospace;font-size:11px;color:var(--red);}
+.tip-box{background:rgba(26,95,160,.06);border:1px solid rgba(26,95,160,.2);border-radius:5px;padding:12px;margin-top:14px;font-size:12px;color:var(--blue);line-height:1.6;}
+.tip-box strong{display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;}
+.tip-box.warn{background:rgba(192,96,16,.06);border-color:rgba(192,96,16,.2);color:var(--orange);}
+.info-box{background:rgba(26,95,160,.06);border:1px solid rgba(26,95,160,.2);border-radius:6px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:var(--blue);line-height:1.7;}
+.info-box strong{display:block;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px;}
+.success-box{background:rgba(26,122,69,.06);border:1px solid rgba(26,122,69,.2);border-radius:6px;padding:14px 18px;margin-top:20px;font-size:13px;color:var(--green);line-height:1.7;}
+.success-box strong{display:block;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px;}
+/* SQL INFO CARDS */
+.info-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+.info-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:22px;box-shadow:var(--shadow);}
+.info-card h3{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:14px;}
+.info-card p,.info-card li{font-size:13px;color:var(--text2);line-height:1.7;}
+.info-card ul{padding-left:16px;}.info-card li{margin-bottom:5px;}
+.istep{display:flex;gap:12px;margin-bottom:12px;align-items:flex-start;}
+.istep-num{min-width:22px;height:22px;background:var(--red);color:#fff;border-radius:3px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0;margin-top:2px;}
+.istep-text{font-size:13px;color:var(--text2);line-height:1.6;}
+.istep-text strong{color:var(--text);}
 .toast{position:fixed;bottom:24px;right:24px;z-index:9999;background:#1a1d23;border:1px solid var(--green);color:#4ecf90;padding:12px 20px;border-radius:5px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.2);display:none;animation:slideUp .25s ease;}
 @keyframes slideUp{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
-
-/* Criterios detail table in modal */
-.criterios-table{width:100%;border-collapse:collapse;margin-top:8px;}
-.criterios-table th{padding:7px 10px;font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--text2);background:var(--surface2);border-bottom:1px solid var(--border);text-align:left;}
-.criterios-table td{padding:8px 10px;font-size:12px;border-bottom:1px solid var(--surface2);}
-.criterios-table tr:last-child td{border-bottom:none;}
-.crit-B{color:var(--green);font-weight:700;}.crit-R{color:var(--orange);font-weight:700;}.crit-M{color:var(--red);font-weight:700;}.crit-NA{color:var(--text3);}
-
 @media(max-width:960px){
-  .stats-grid,.machines-grid,.charts-grid,.kpi-row{grid-template-columns:repeat(2,1fr);}
+  .stats-grid,.machines-grid,.charts-grid,.kpi-row,.guide-grid,.info-cards{grid-template-columns:repeat(2,1fr);}
   .form-grid{grid-template-columns:1fr;}
-  .criterios-grid{grid-template-columns:1fr;}
   .photo-preview-grid,.detail-photos{grid-template-columns:repeat(2,1fr);}
   .detail-grid{grid-template-columns:repeat(2,1fr);}
   .main{padding:20px 16px;}
@@ -218,15 +228,13 @@ hr.fdiv{grid-column:1/-1;border:none;border-top:1px solid var(--border);margin:8
 </style>
 </head>
 <body>
-
-<!-- HEADER -->
 <header class="header">
   <div class="logo">
-    <div class="logo-icon">🪟</div>
+    <img src="data:image/png;base64,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" alt="Pacasmayo">
     <div class="logo-divider"></div>
     <div class="logo-text">
-      <h1>Sistema de Inspección de Plumillas</h1>
-      <span>Control de Flota &nbsp;·&nbsp; Registro de Inspecciones &nbsp;·&nbsp; Seguimiento de Hallazgos</span>
+      <h1>Sistema de Gestión de Mantenimiento Industrial</h1>
+      <span>Control de Flota &nbsp;·&nbsp; Registro de Intervenciones &nbsp;·&nbsp; </span>
     </div>
   </div>
   <div class="header-right">
@@ -234,11 +242,9 @@ hr.fdiv{grid-column:1/-1;border:none;border-top:1px solid var(--border);margin:8
     <span class="clock-disp" id="clockDisplay"></span>
   </div>
 </header>
-
-<!-- NAV -->
 <nav class="nav">
   <button class="nav-btn active" onclick="showTab('dashboard')">Dashboard</button>
-  <button class="nav-btn" onclick="showTab('registro')">Registrar Inspección</button>
+  <button class="nav-btn" onclick="showTab('registro')">Registrar Mantenimiento</button>
   <button class="nav-btn" onclick="showTab('historial')">Historial</button>
   <button class="nav-btn" onclick="showTab('estadisticas')">Estadísticas</button>
   <button class="nav-btn" onclick="showTab('observaciones')">Observaciones</button>
@@ -247,42 +253,82 @@ hr.fdiv{grid-column:1/-1;border:none;border-top:1px solid var(--border);margin:8
 
 <div class="main">
 
-<!-- ===== DASHBOARD ===== -->
+<!-- DASHBOARD -->
 <div class="tab active" id="tab-dashboard">
-  <div class="section-header"><h2>Resumen General</h2><div class="sh-line"></div></div>
   <div class="stats-grid">
-    <div class="stat-card c-blue"><div class="stat-icon">📋</div><div><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total Inspecciones</div></div></div>
-    <div class="stat-card c-red"><div class="stat-icon">🚨</div><div><div class="stat-num" id="stat-critico">0</div><div class="stat-label">Críticas</div></div></div>
-    <div class="stat-card c-orange"><div class="stat-icon">⚠️</div><div><div class="stat-num" id="stat-urgente">0</div><div class="stat-label">Urgentes</div></div></div>
-    <div class="stat-card c-green"><div class="stat-icon">✅</div><div><div class="stat-num" id="stat-operativa">0</div><div class="stat-label">Operativas</div></div></div>
-    <div class="stat-card c-gray"><div class="stat-icon">🔧</div><div><div class="stat-num" id="stat-mant">0</div><div class="stat-label">En Mantenimiento</div></div></div>
+    <div class="stat-card c-red" onclick="showTab('registro')">
+      <div class="stat-icon">REG</div>
+      <div class="stat-info"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Registros Totales</div></div>
+    </div>
+    <div class="stat-card c-green">
+      <div class="stat-icon">OPR</div>
+      <div class="stat-info"><div class="stat-num" id="stat-op">5</div><div class="stat-label">Unidades Operativas</div></div>
+    </div>
+    <div class="stat-card c-orange">
+      <div class="stat-icon">F/P</div>
+      <div class="stat-info"><div class="stat-num" id="stat-fuera">0</div><div class="stat-label">Fuera de Planta</div></div>
+    </div>
+    <div class="stat-card c-blue">
+      <div class="stat-icon">HRS</div>
+      <div class="stat-info"><div class="stat-num" id="stat-horas">0h</div><div class="stat-label">Horas de Paro Acum.</div></div>
+    </div>
+    <div class="stat-card c-gray">
+      <div class="stat-icon">PRX</div>
+      <div class="stat-info"><div class="stat-num" id="stat-prox">0</div><div class="stat-label">Próximos 7 Días</div></div>
+    </div>
   </div>
-
   <div class="section-header"><h2>Estado de Flota</h2><div class="sh-line"></div></div>
   <div class="machines-grid">
-    <div class="machine-card" onclick="selectMachine('CARGADOR FRONTAL')"><div class="machine-abbr">CF</div><div class="machine-name">Cargador Frontal</div><div class="machine-count" id="count-CF">0 inspecciones</div><div class="machine-status status-ok" id="status-CF">OPERATIVO</div></div>
-    <div class="machine-card" onclick="selectMachine('TRACTOR')"><div class="machine-abbr">TR</div><div class="machine-name">Tractor</div><div class="machine-count" id="count-TR">0 inspecciones</div><div class="machine-status status-ok" id="status-TR">OPERATIVO</div></div>
-    <div class="machine-card" onclick="selectMachine('CISTERNA')"><div class="machine-abbr">CI</div><div class="machine-name">Cisterna</div><div class="machine-count" id="count-CI">0 inspecciones</div><div class="machine-status status-ok" id="status-CI">OPERATIVO</div></div>
-    <div class="machine-card" onclick="selectMachine('BARREDORA')"><div class="machine-abbr">BA</div><div class="machine-name">Barredora</div><div class="machine-count" id="count-BA">0 inspecciones</div><div class="machine-status status-ok" id="status-BA">OPERATIVO</div></div>
-    <div class="machine-card" onclick="selectMachine('VOLQUETE')"><div class="machine-abbr">VO</div><div class="machine-name">Volquete</div><div class="machine-count" id="count-VO">0 inspecciones</div><div class="machine-status status-ok" id="status-VO">OPERATIVO</div></div>
+    <div class="machine-card" onclick="selectMachine('CARGADOR FRONTAL')">
+      <div class="machine-abbr">CF</div><div class="machine-name">Cargador Frontal</div>
+      <div class="machine-count" id="count-CF">0 intervenciones</div>
+      <div class="machine-status status-ok" id="status-CF">OPERATIVO</div>
+    </div>
+    <div class="machine-card" onclick="selectMachine('TRACTOR')">
+      <div class="machine-abbr">TR</div><div class="machine-name">Tractor</div>
+      <div class="machine-count" id="count-TR">0 intervenciones</div>
+      <div class="machine-status status-ok" id="status-TR">OPERATIVO</div>
+    </div>
+    <div class="machine-card" onclick="selectMachine('CISTERNA')">
+      <div class="machine-abbr">CI</div><div class="machine-name">Cisterna</div>
+      <div class="machine-count" id="count-CI">0 intervenciones</div>
+      <div class="machine-status status-ok" id="status-CI">OPERATIVO</div>
+    </div>
+    <div class="machine-card" onclick="selectMachine('BARREDORA')">
+      <div class="machine-abbr">BA</div><div class="machine-name">Barredora</div>
+      <div class="machine-count" id="count-BA">0 intervenciones</div>
+      <div class="machine-status status-ok" id="status-BA">OPERATIVO</div>
+    </div>
+    <div class="machine-card" onclick="selectMachine('VOLQUETE')">
+      <div class="machine-abbr">VO</div><div class="machine-name">Volquete</div>
+      <div class="machine-count" id="count-VO">0 intervenciones</div>
+      <div class="machine-status status-ok" id="status-VO">OPERATIVO</div>
+    </div>
   </div>
-
   <div class="table-wrapper">
-    <div class="table-header"><h3>Últimas Inspecciones</h3><button class="btn btn-secondary" style="font-size:11px;padding:7px 14px" onclick="showTab('historial')">VER TODO →</button></div>
+    <div class="table-header">
+      <h3>Últimos Registros</h3>
+      <button class="btn btn-secondary" style="font-size:11px;padding:7px 14px" onclick="showTab('historial')">VER TODO →</button>
+    </div>
     <table>
-      <thead><tr><th>N° Reg.</th><th>Fecha</th><th>Unidad</th><th>Código</th><th>Conductor</th><th>Prioridad</th><th>Estado</th><th>Obs.</th></tr></thead>
-      <tbody id="recent-tbody"><tr><td colspan="8" style="text-align:center;color:var(--text2);padding:32px">Sin registros aún.</td></tr></tbody>
+      <thead><tr>
+        <th>N° Reg.</th><th>Fecha</th><th>Unidad</th><th>Tipo</th>
+        <th>Motivo</th><th>Supervisor</th><th>H. Paro</th><th>Estado</th><th>Obs.</th>
+      </tr></thead>
+      <tbody id="recent-tbody">
+        <tr><td colspan="9" style="text-align:center;color:var(--text2);padding:32px">Sin registros aún.</td></tr>
+      </tbody>
     </table>
   </div>
 </div>
 
-<!-- ===== REGISTRO ===== -->
+<!-- REGISTRO -->
 <div class="tab" id="tab-registro">
   <div class="form-card">
-    <div class="fsect">Datos de la Inspección</div>
+    <div class="fsect">Datos del Mantenimiento</div>
     <div class="form-grid">
       <div class="form-group">
-        <label>Tipo de Unidad</label>
+        <label>Unidad / Máquina</label>
         <select id="f-maquina">
           <option value="">-- Seleccionar --</option>
           <option>CARGADOR FRONTAL</option><option>TRACTOR</option>
@@ -291,86 +337,99 @@ hr.fdiv{grid-column:1/-1;border:none;border-top:1px solid var(--border);margin:8
       </div>
       <div class="form-group">
         <label>Código / Placa</label>
-        <input type="text" id="f-codigo" placeholder="CAT 966 H16 / TQF-919">
+        <input type="text" id="f-codigo" placeholder="CF-001 / T7U-842">
       </div>
       <div class="form-group">
-        <label>Fecha de Inspección</label>
+        <label>Fecha de Mantenimiento</label>
         <input type="date" id="f-fecha">
       </div>
+      <div class="form-group full">
+        <label>Tipo de Mantenimiento</label>
+        <div class="tipo-grid">
+          <div class="tipo-btn" onclick="selectTipo(this,'PREVENTIVO')">Preventivo</div>
+          <div class="tipo-btn" onclick="selectTipo(this,'CORRECTIVO')">Correctivo</div>
+          <div class="tipo-btn" onclick="selectTipo(this,'PREDICTIVO')">Predictivo</div>
+          <div class="tipo-btn" onclick="selectTipo(this,'EMERGENCIA')">Emergencia</div>
+        </div>
+        <input type="hidden" id="f-tipo">
+      </div>
+
+      <!-- MOTIVO DE INGRESO -->
+      <div class="form-group full" style="background:rgba(204,26,26,.03);border:1px solid rgba(204,26,26,.12);border-radius:6px;padding:16px;margin:4px 0;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--red);margin-bottom:12px;">Motivo de Ingreso a Mantenimiento</div>
+        <div style="display:grid;grid-template-columns:1fr 2fr;gap:14px;">
+          <div class="form-group">
+            <label>Categoría del Motivo</label>
+            <select id="f-motivo-cat">
+              <option value="">-- Seleccionar categoría --</option>
+              <option>Falla mecánica</option>
+              <option>Falla eléctrica</option>
+              <option>Falla hidráulica</option>
+              <option>Falla de motor</option>
+              <option>Desgaste de neumáticos</option>
+              <option>Cambio de aceite / filtros</option>
+              <option>Revisión de frenos</option>
+              <option>Fuga de combustible</option>
+              <option>Fuga de aceite</option>
+              <option>Daño por accidente / colisión</option>
+              <option>Mantenimiento programado</option>
+              <option>Revisión general</option>
+              <option>Recalentamiento de motor</option>
+              <option>Falla de sistema de enfriamiento</option>
+              <option>Problema de transmisión</option>
+              <option>Otro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Descripción del Motivo / Síntomas observados</label>
+            <textarea id="f-motivo" placeholder="Describa los síntomas, fallas observadas o condición que originó el ingreso a mantenimiento..." style="min-height:70px"></textarea>
+          </div>
+        </div>
+      </div>
+
       <div class="form-group">
-        <label>Conductor</label>
-        <input type="text" id="f-conductor" placeholder="Nombre del conductor">
+        <label>Supervisor Responsable</label>
+        <input type="text" id="f-supervisor" placeholder="Nombre del supervisor">
       </div>
       <div class="form-group">
-        <label>Turno</label>
-        <select id="f-turno">
-          <option value="A">Turno A</option>
-          <option value="B">Turno B</option>
-          <option value="C">Turno C</option>
+        <label>Hora de Inicio</label>
+        <input type="time" id="f-hora-inicio">
+      </div>
+      <div class="form-group">
+        <label>Hora de Finalización</label>
+        <input type="time" id="f-hora-fin">
+      </div>
+      <div class="form-group">
+        <label>Total Horas de Paro</label>
+        <input type="number" id="f-horas-paro" placeholder="0.0" min="0" step="0.5">
+      </div>
+      <div class="form-group">
+        <label>¿Sale de Planta?</label>
+        <select id="f-fuera-planta">
+          <option value="NO">NO -- Mantenimiento en sitio</option>
+          <option value="SI">SÍ -- Sale a taller externo</option>
         </select>
       </div>
       <div class="form-group">
-        <label>Inspector</label>
-        <input type="text" id="f-inspector" placeholder="Nombre del inspector">
+        <label>Fecha Estimada de Retorno</label>
+        <input type="date" id="f-fecha-retorno">
       </div>
-
-      <hr class="fdiv">
-
-      <!-- PRIORIDAD -->
-      <div class="form-group full">
-        <label>Prioridad / Resultado de Inspección</label>
-        <div class="prioridad-grid">
-          <div class="prio-btn p-critico" onclick="selectPrioridad(this,'CRÍTICO')">🚨 Crítico</div>
-          <div class="prio-btn p-urgente" onclick="selectPrioridad(this,'URGENTE')">⚠️ Urgente</div>
-          <div class="prio-btn p-moderado" onclick="selectPrioridad(this,'MODERADO')">🔶 Moderado</div>
-          <div class="prio-btn p-normal" onclick="selectPrioridad(this,'NORMAL')">✅ Normal</div>
-        </div>
-        <input type="hidden" id="f-prioridad">
-      </div>
-
-      <!-- ESTADO -->
       <div class="form-group">
-        <label>Estado de la Unidad</label>
+        <label>Próximo Mantenimiento</label>
+        <input type="date" id="f-proximo">
+      </div>
+      <div class="form-group">
+        <label>Estado del Trabajo</label>
         <select id="f-estado">
-          <option value="OPERATIVA">OPERATIVA</option>
-          <option value="MANTENIMIENTO URGENTE">MANTENIMIENTO URGENTE</option>
-          <option value="MANTENIMIENTO CORRECTIVO">MANTENIMIENTO CORRECTIVO</option>
-          <option value="LIMPIEZA PREVENTIVA">LIMPIEZA PREVENTIVA</option>
-          <option value="FUERA DE SERVICIO">FUERA DE SERVICIO</option>
+          <option value="PROGRAMADO">PROGRAMADO</option>
+          <option value="EN PROCESO">EN PROCESO</option>
+          <option value="COMPLETADO">COMPLETADO</option>
+          <option value="PENDIENTE">PENDIENTE</option>
         </select>
       </div>
-
-      <hr class="fdiv">
-
-      <!-- CRITERIOS DE INSPECCIÓN -->
-      <div class="form-group full">
-        <div class="fsect" style="border:none;padding:0;margin-bottom:14px">Criterios de Inspección &nbsp;<span style="font-size:10px;font-weight:400;color:var(--text3)">(B = Bueno | R = Regular | M = Malo | N/A = No Aplica)</span></div>
-        <div class="criterios-grid">
-          <div class="criterio-row"><span class="criterio-code">CS01</span><span class="criterio-label">Estado de la goma (desgaste, rajaduras, endurecimiento)</span><select class="criterio-select" id="cs01" onchange="colorCriterio(this)"><option value="B">B</option><option value="R">R</option><option value="M">M</option><option value="NA">N/A</option></select></div>
-          <div class="criterio-row"><span class="criterio-code">CS02</span><span class="criterio-label">Presión de contacto con el parabrisas</span><select class="criterio-select" id="cs02" onchange="colorCriterio(this)"><option value="B">B</option><option value="R">R</option><option value="M">M</option><option value="NA">N/A</option></select></div>
-          <div class="criterio-row"><span class="criterio-code">CS03</span><span class="criterio-label">Limpieza y ausencia de barro/grasa en la goma</span><select class="criterio-select" id="cs03" onchange="colorCriterio(this)"><option value="B">B</option><option value="R">R</option><option value="M">M</option><option value="NA">N/A</option></select></div>
-          <div class="criterio-row"><span class="criterio-code">CS04</span><span class="criterio-label">Estado del brazo portaplumilla (doblado, corrosión, bisagra)</span><select class="criterio-select" id="cs04" onchange="colorCriterio(this)"><option value="B">B</option><option value="R">R</option><option value="M">M</option><option value="NA">N/A</option></select></div>
-          <div class="criterio-row"><span class="criterio-code">CS06</span><span class="criterio-label">Velocidades de operación (lenta / rápida)</span><select class="criterio-select" id="cs06" onchange="colorCriterio(this)"><option value="B">B</option><option value="R">R</option><option value="M">M</option><option value="NA">N/A</option></select></div>
-          <div class="criterio-row"><span class="criterio-code">CS07</span><span class="criterio-label">Funcionamiento del sistema de lavado</span><select class="criterio-select" id="cs07" onchange="colorCriterio(this)"><option value="B">B</option><option value="R">R</option><option value="M">M</option><option value="NA">N/A</option></select></div>
-          <div class="criterio-row"><span class="criterio-code">CS08</span><span class="criterio-label">Nivel de líquido limpiaparabrisas</span><select class="criterio-select" id="cs08" onchange="colorCriterio(this)"><option value="B">B</option><option value="R">R</option><option value="M">M</option><option value="NA">N/A</option></select></div>
-          <div class="criterio-row"><span class="criterio-code">CS09</span><span class="criterio-label">Estado de las toberas de rociado (obstrucción/dirección)</span><select class="criterio-select" id="cs09" onchange="colorCriterio(this)"><option value="B">B</option><option value="R">R</option><option value="M">M</option><option value="NA">N/A</option></select></div>
-          <div class="criterio-row"><span class="criterio-code">CS10</span><span class="criterio-label">Limpieza y visibilidad del parabrisas tras operación</span><select class="criterio-select" id="cs10" onchange="colorCriterio(this)"><option value="B">B</option><option value="R">R</option><option value="M">M</option><option value="NA">N/A</option></select></div>
-          <div class="criterio-row"><span class="criterio-code">CS11</span><span class="criterio-label">Plumilla trasera / lateral (si aplica)</span><select class="criterio-select" id="cs11" onchange="colorCriterio(this)"><option value="B">B</option><option value="R">R</option><option value="M">M</option><option value="NA">N/A</option></select></div>
-        </div>
-      </div>
-
-      <!-- HALLAZGOS -->
-      <div class="form-group full">
-        <label>Hallazgos Principales</label>
-        <textarea id="f-hallazgos" placeholder="Describa los hallazgos principales, fallas observadas y condición de la unidad..." style="min-height:80px"></textarea>
-      </div>
-      <div class="form-group full">
-        <label>Medidas a Tomar</label>
-        <textarea id="f-medidas" placeholder="Acciones correctivas o preventivas programadas..." style="min-height:60px"></textarea>
-      </div>
       <div class="form-group">
-        <label>Próxima Inspección</label>
-        <input type="date" id="f-proxima">
+        <label>Repuestos y Materiales</label>
+        <input type="text" id="f-repuestos" placeholder="Filtro aceite, correa, etc.">
       </div>
 
       <hr class="fdiv">
@@ -380,7 +439,7 @@ hr.fdiv{grid-column:1/-1;border:none;border-top:1px solid var(--border);margin:8
           <input type="file" id="f-fotos" accept="image/*" multiple onchange="handlePhotos(this.files)">
           <div class="upload-text" style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">[ ADJUNTAR FOTOGRAFÍAS ]</div>
           <div class="upload-text">Arrastre las imágenes aquí o <strong>haga clic para seleccionar</strong></div>
-          <div class="upload-hint">JPG, PNG, WEBP — Máximo 5 fotografías</div>
+          <div class="upload-hint">JPG, PNG, WEBP -- Máximo 5 fotografías</div>
         </div>
         <div class="photo-preview-grid" id="photo-preview"></div>
         <div class="photo-count" id="photo-count"></div>
@@ -393,15 +452,15 @@ hr.fdiv{grid-column:1/-1;border:none;border-top:1px solid var(--border);margin:8
           <div class="obs-header">
             <span class="obs-title">Nivel de Criticidad</span>
             <div class="obs-nivel">
-              <button class="obs-nivel-btn sel-info" id="obs-btn-info" onclick="selectNivel('INFO')">Informativo</button>
-              <button class="obs-nivel-btn" id="obs-btn-warning" onclick="selectNivel('ADVERTENCIA')">Advertencia</button>
-              <button class="obs-nivel-btn" id="obs-btn-critical" onclick="selectNivel('CRITICO')">Crítico</button>
+              <button class="obs-nivel-btn sel-info"   id="obs-btn-info"     onclick="selectNivel('INFO')">Informativo</button>
+              <button class="obs-nivel-btn"             id="obs-btn-warning"  onclick="selectNivel('ADVERTENCIA')">Advertencia</button>
+              <button class="obs-nivel-btn"             id="obs-btn-critical" onclick="selectNivel('CRITICO')">Crítico</button>
             </div>
           </div>
           <div class="obs-body">
-            <textarea class="obs-textarea" id="f-observaciones" placeholder="Observaciones adicionales para jefatura: riesgos operativos, recomendaciones, condición crítica..."></textarea>
+            <textarea class="obs-textarea" id="f-observaciones" placeholder="Observaciones adicionales para jefatura: condición actual, riesgos, recomendaciones..."></textarea>
             <div class="obs-meta">
-              <input type="text" id="f-obs-reporta" placeholder="Reportado por">
+              <input type="text" id="f-obs-reporta"  placeholder="Reportado por">
               <input type="text" id="f-obs-jefatura" placeholder="Dirigido a (Jefe / Supervisor)">
             </div>
           </div>
@@ -411,40 +470,42 @@ hr.fdiv{grid-column:1/-1;border:none;border-top:1px solid var(--border);margin:8
     </div>
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="clearForm()">Limpiar</button>
-      <button class="btn btn-primary" onclick="guardarRegistro()">Guardar Inspección</button>
+      <button class="btn btn-primary"   onclick="guardarRegistro()">Guardar Registro</button>
     </div>
   </div>
 </div>
 
-<!-- ===== HISTORIAL ===== -->
+<!-- HISTORIAL -->
 <div class="tab" id="tab-historial">
   <div class="table-wrapper">
     <div class="table-header">
-      <h3>Historial Completo de Inspecciones</h3>
+      <h3>Historial Completo de Mantenimientos</h3>
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <select id="filtro-maquina" onchange="renderHistorial()" style="font-size:12px;padding:6px 12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px">
           <option value="">Todas las unidades</option>
           <option>CARGADOR FRONTAL</option><option>TRACTOR</option>
           <option>CISTERNA</option><option>BARREDORA</option><option>VOLQUETE</option>
         </select>
-        <select id="filtro-prioridad" onchange="renderHistorial()" style="font-size:12px;padding:6px 12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px">
-          <option value="">Todas las prioridades</option>
-          <option>CRÍTICO</option><option>URGENTE</option><option>MODERADO</option><option>NORMAL</option>
-        </select>
         <button class="btn btn-sql" style="font-size:11px;padding:7px 14px" onclick="exportarExcel()">Exportar Excel</button>
       </div>
     </div>
     <table>
-      <thead><tr><th>N° Reg.</th><th>Fecha</th><th>Unidad</th><th>Código</th><th>Conductor</th><th>Prioridad</th><th>Estado</th><th>Obs.</th><th>Detalle</th><th>Eliminar</th></tr></thead>
-      <tbody id="historial-tbody"><tr><td colspan="10" style="text-align:center;color:var(--text2);padding:32px">Sin registros aún.</td></tr></tbody>
+      <thead><tr>
+        <th>N° Reg.</th><th>Fecha</th><th>Unidad</th><th>Código</th>
+        <th>Tipo</th><th>Motivo</th><th>Supervisor</th>
+        <th>H. Paro</th><th>Fuera Planta</th><th>Estado</th><th>Obs.</th><th>Detalle</th>
+      </tr></thead>
+      <tbody id="historial-tbody">
+        <tr><td colspan="12" style="text-align:center;color:var(--text2);padding:32px">Sin registros aún.</td></tr>
+      </tbody>
     </table>
   </div>
 </div>
 
-<!-- ===== ESTADÍSTICAS ===== -->
+<!-- ESTADÍSTICAS -->
 <div class="tab" id="tab-estadisticas">
   <div class="section-header">
-    <h2>Indicadores Clave — KPI</h2><div class="sh-line"></div>
+    <h2>Indicadores Clave -- KPI</h2><div class="sh-line"></div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <select id="filtro-estadistica" onchange="renderEstadisticas()" style="font-size:12px;padding:7px 14px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;font-weight:700">
         <option value="">TODAS LAS UNIDADES</option>
@@ -458,33 +519,41 @@ hr.fdiv{grid-column:1/-1;border:none;border-top:1px solid var(--border);margin:8
     </div>
   </div>
   <div class="kpi-row">
-    <div class="kpi-box kpi-blue"><div class="kpi-num" id="kpi-total">0</div><div class="kpi-label">Total Inspecciones</div></div>
-    <div class="kpi-box kpi-red"><div class="kpi-num" id="kpi-critico">0</div><div class="kpi-label">Críticas / Urgentes</div></div>
-    <div class="kpi-box kpi-orange"><div class="kpi-num" id="kpi-hallazgos">0</div><div class="kpi-label">Con Hallazgos</div></div>
-    <div class="kpi-box kpi-green"><div class="kpi-num" id="kpi-operativas">0</div><div class="kpi-label">Operativas</div></div>
+    <div class="kpi-box kpi-red"><div class="kpi-num" id="kpi-total">0</div><div class="kpi-label">Total Intervenciones</div></div>
+    <div class="kpi-box kpi-blue"><div class="kpi-num" id="kpi-horas">0h</div><div class="kpi-label">Horas Totales de Paro</div></div>
+    <div class="kpi-box kpi-orange"><div class="kpi-num" id="kpi-fuera">0</div><div class="kpi-label">Salidas a Planta Externa</div></div>
+    <div class="kpi-box kpi-green"><div class="kpi-num" id="kpi-comp">0</div><div class="kpi-label">Trabajos Completados</div></div>
   </div>
   <div class="charts-grid">
-    <div class="chart-card"><div class="chart-title">Inspecciones por Unidad</div><div id="ch-maq"></div></div>
-    <div class="chart-card"><div class="chart-title">Distribución por Prioridad</div><div id="ch-prio"></div></div>
-    <div class="chart-card"><div class="chart-title">Estado de Unidades</div><div id="ch-estado"></div></div>
-    <div class="chart-card"><div class="chart-title">Falla CS01 — Goma</div><div id="ch-cs01"></div></div>
-    <div class="chart-card"><div class="chart-title">Falla CS07 — Sistema Lavado</div><div id="ch-cs07"></div></div>
-    <div class="chart-card"><div class="chart-title">Falla CS09 — Toberas</div><div id="ch-cs09"></div></div>
+    <div class="chart-card"><div class="chart-title">Intervenciones por Unidad</div><div id="ch-maq"></div></div>
+    <div class="chart-card"><div class="chart-title">Motivo de Ingreso</div><div id="ch-motivo"></div></div>
+    <div class="chart-card"><div class="chart-title">Tipo de Mantenimiento</div><div id="ch-tipo"></div></div>
+    <div class="chart-card"><div class="chart-title">Horas de Paro por Unidad</div><div id="ch-horas"></div></div>
+    <div class="chart-card"><div class="chart-title">Estado de los Trabajos</div><div id="ch-estado"></div></div>
+    <div class="chart-card"><div class="chart-title">Salidas Fuera de Planta</div><div id="ch-fuera"></div></div>
   </div>
+
+  <!-- NUEVAS SECCIONES: POR MES Y POR DÍA -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px">
+    <!-- POR MES -->
     <div class="chart-card" style="grid-column:1/-1">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px">
-        <div class="chart-title" style="margin:0;padding:0;border:none">Inspecciones por Mes</div>
+        <div class="chart-title" style="margin:0;padding:0;border:none">Mantenimientos por Mes</div>
         <select id="filtro-mes-year" onchange="renderEstadisticas()" style="font-size:12px;padding:6px 10px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;font-weight:700"></select>
       </div>
       <div id="ch-mes"></div>
     </div>
+
+    <!-- POR DÍA DEL MES -->
     <div class="chart-card" style="grid-column:1/-1">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px">
-        <div class="chart-title" style="margin:0;padding:0;border:none">Inspecciones por Día</div>
+        <div class="chart-title" style="margin:0;padding:0;border:none">Mantenimientos por Día</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <select id="filtro-dia-mes" onchange="renderEstadisticas()" style="font-size:12px;padding:6px 10px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;font-weight:700">
-            <option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option><option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
+            <option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option>
+            <option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
+            <option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option>
+            <option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
           </select>
           <select id="filtro-dia-year" onchange="renderEstadisticas()" style="font-size:12px;padding:6px 10px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;font-weight:700"></select>
         </div>
@@ -493,18 +562,21 @@ hr.fdiv{grid-column:1/-1;border:none;border-top:1px solid var(--border);margin:8
     </div>
   </div>
   <div class="table-wrapper">
-    <div class="table-header"><h3>Resumen por Inspector</h3></div>
+    <div class="table-header"><h3>Resumen por Supervisor</h3></div>
     <table>
-      <thead><tr><th>Inspector</th><th>Inspecciones</th><th>Críticas</th><th>Urgentes</th><th>Operativas</th><th>Obs. Críticas</th></tr></thead>
-      <tbody id="tabla-inspectores"></tbody>
+      <thead><tr>
+        <th>Supervisor</th><th>Intervenciones</th><th>H. Paro Total</th>
+        <th>Completados</th><th>Pendientes</th><th>Obs. Críticas</th>
+      </tr></thead>
+      <tbody id="tabla-supervisores"></tbody>
     </table>
   </div>
 </div>
 
-<!-- ===== OBSERVACIONES ===== -->
+<!-- OBSERVACIONES -->
 <div class="tab" id="tab-observaciones">
   <div class="section-header">
-    <h2>Hallazgos y Observaciones por Registro</h2><div class="sh-line"></div>
+    <h2>Motivos y Observaciones por Registro</h2><div class="sh-line"></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
       <select id="filtro-obs-nivel" onchange="renderObservaciones()" style="font-size:12px;padding:6px 12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px">
         <option value="">Todos los niveles</option>
@@ -520,28 +592,31 @@ hr.fdiv{grid-column:1/-1;border:none;border-top:1px solid var(--border);margin:8
     </div>
   </div>
   <div id="obs-feed-container" class="obs-feed">
-    <div style="text-align:center;color:var(--text2);padding:48px;background:var(--surface);border:1px solid var(--border);border-radius:6px">Sin registros aún. Los hallazgos y observaciones aparecerán aquí.</div>
+    <div style="text-align:center;color:var(--text2);padding:48px;background:var(--surface);border:1px solid var(--border);border-radius:6px">Sin registros aún. Los motivos y observaciones aparecerán aquí.</div>
   </div>
 </div>
 
-<!-- ===== CALENDARIO ===== -->
+<!-- CALENDARIO -->
 <div class="tab" id="tab-calendario">
   <div class="form-card" style="margin-bottom:20px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
       <button class="btn btn-secondary" onclick="changeMonth(-1)" style="padding:7px 16px;font-size:18px;line-height:1">&#8249;</button>
       <div id="cal-title" style="font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text2)">--</div>
-      <button class="btn btn-secondary" onclick="changeMonth(1)" style="padding:7px 16px;font-size:18px;line-height:1">&#8250;</button>
+      <button class="btn btn-secondary" onclick="changeMonth(1)"  style="padding:7px 16px;font-size:18px;line-height:1">&#8250;</button>
     </div>
     <div class="cal-header-days">
-      <div class="cal-day-name">Dom</div><div class="cal-day-name">Lun</div><div class="cal-day-name">Mar</div><div class="cal-day-name">Mié</div><div class="cal-day-name">Jue</div><div class="cal-day-name">Vie</div><div class="cal-day-name">Sáb</div>
+      <div class="cal-day-name">Dom</div><div class="cal-day-name">Lun</div>
+      <div class="cal-day-name">Mar</div><div class="cal-day-name">Mié</div>
+      <div class="cal-day-name">Jue</div><div class="cal-day-name">Vie</div>
+      <div class="cal-day-name">Sáb</div>
     </div>
     <div class="cal-grid" id="cal-grid"></div>
   </div>
   <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
     <span style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:1px;text-transform:uppercase">Leyenda:</span>
-    <span class="badge badge-red">Crítico</span>
-    <span class="badge badge-orange">Urgente / Moderado</span>
-    <span class="badge badge-green">Operativa</span>
+    <span class="badge badge-orange">Programado</span>
+    <span class="badge badge-red">Fuera de planta</span>
+    <span class="badge badge-green">Completado</span>
   </div>
 </div>
 
@@ -551,24 +626,17 @@ hr.fdiv{grid-column:1/-1;border:none;border-top:1px solid var(--border);margin:8
 <div class="modal-overlay" id="modal-detail">
   <div class="detail-modal">
     <div class="modal-title">
-      <span id="detail-id">Detalle de la Inspección</span>
+      <span id="detail-id">Detalle del Registro</span>
       <button class="btn btn-secondary" onclick="closeDetail()" style="padding:5px 14px;font-size:11px">Cerrar</button>
     </div>
     <div class="detail-grid" id="detail-fields"></div>
-    <div id="det-criterios-sec" style="display:none">
-      <div class="sub-section-title">Criterios de Inspección</div>
-      <table class="criterios-table">
-        <thead><tr><th>Código</th><th>Criterio</th><th>Calificación</th></tr></thead>
-        <tbody id="det-criterios-tbody"></tbody>
-      </table>
-    </div>
-    <div id="det-hallazgos-sec" style="display:none">
-      <div class="sub-section-title">Hallazgos y Medidas</div>
+    <div id="det-motivo-sec" style="display:none">
+      <div class="sub-section-title">Motivo de Ingreso a Mantenimiento</div>
       <div style="background:rgba(204,26,26,.04);border:1px solid rgba(204,26,26,.15);border-radius:5px;padding:14px;">
-        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);margin-bottom:4px">Hallazgos Principales</div>
-        <div id="det-hallazgos-txt" style="font-size:13px;color:var(--text);line-height:1.7;white-space:pre-wrap;margin-bottom:12px">--</div>
-        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);margin-bottom:4px">Medidas a Tomar</div>
-        <div id="det-medidas-txt" style="font-size:13px;color:var(--text);line-height:1.7;white-space:pre-wrap">--</div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);margin-bottom:4px">Categoría</div>
+        <div id="det-motivo-cat" style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:10px">--</div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);margin-bottom:4px">Descripción / Síntomas</div>
+        <div id="det-motivo-txt" style="font-size:13px;color:var(--text);line-height:1.7;white-space:pre-wrap">--</div>
       </div>
     </div>
     <div id="det-obs-sec" style="display:none">
@@ -590,208 +658,284 @@ hr.fdiv{grid-column:1/-1;border:none;border-top:1px solid var(--border);margin:8
 <div class="toast" id="toast">Registro guardado</div>
 
 <div id="loading-overlay" style="position:fixed;inset:0;background:#1a1d23;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px">
-  <div style="font-size:48px;animation:spin 1s linear infinite;display:inline-block">🪟</div>
-  <div style="color:rgba(255,255,255,.6);font-size:13px;letter-spacing:2px;text-transform:uppercase">Cargando datos — Febrero 2026...</div>
+  <div style="width:48px;height:48px;border:4px solid rgba(204,26,26,.2);border-top-color:#cc1a1a;border-radius:50%;animation:spin 0.8s linear infinite"></div>
+  <div style="color:rgba(255,255,255,.6);font-size:13px;letter-spacing:2px;text-transform:uppercase">Cargando datos del equipo...</div>
   <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
 
+var firebaseConfig = {
+  apiKey: "AIzaSyBhkPSoHXbpcKNfZ3Vn_dBY9KcHi2DdPV0",
+  authDomain: "mant-pacasmayo.firebaseapp.com",
+  databaseURL: "https://mant-pacasmayo-default-rtdb.firebaseio.com",
+  projectId: "mant-pacasmayo",
+  storageBucket: "mant-pacasmayo.firebasestorage.app",
+  messagingSenderId: "625837128733",
+  appId: "1:625837128733:web:6d22ffa9d3a3a340de1af4",
+  measurementId: "G-B1G95N1030"
+};
+
+var app = firebase.initializeApp(firebaseConfig);
+var db = firebase.database();
+var registrosRef = db.ref('registros');
+var counterRef = db.ref('counter');
+
+var registros = [];
+var idCounter = 1;
 var currentMonth = new Date().getMonth();
 var currentYear  = new Date().getFullYear();
 var currentPhotos = [];
-var idCounter = 17;
 
-var CRITERIOS_LABELS = {
-  cs01:'Goma (desgaste/rajaduras)',cs02:'Presión de contacto',cs03:'Limpieza de goma',
-  cs04:'Brazo portaplumilla',cs06:'Velocidades de operación',cs07:'Sistema de lavado',
-  cs08:'Nivel de líquido',cs09:'Toberas de rociado',cs10:'Visibilidad parabrisas',cs11:'Plumilla trasera/lateral'
-};
+// Escuchar cambios en tiempo real
+registrosRef.on('value', function(snapshot) {
+  var val = snapshot.val();
+  if (val) {
+    registros = Object.values(val).sort(function(a,b){
+      return new Date(b.fechaReg) - new Date(a.fechaReg);
+    });
+    registros.forEach(function(r) {
+      try {
+        var f = localStorage.getItem('fotos_'+r.id);
+        if (f) r.fotos = JSON.parse(f);
+        else if (!r.fotos) r.fotos = [];
+      } catch(e) { r.fotos = []; }
+    });
+  } else {
+    registros = [];
+  }
+  renderDashboard();
+  var tab = document.querySelector('.tab.active');
+  if (tab) {
+    var id = tab.id.replace('tab-','');
+    if(id==='historial') renderHistorial();
+    if(id==='estadisticas') renderEstadisticas();
+    if(id==='observaciones') renderObservaciones();
+    if(id==='calendario') renderCalendar();
+  }
+  document.getElementById('loading-overlay').style.display = 'none';
+});
 
-// ── DATOS FEBRERO 2026 ─────────────────────────────────────────────────────
-var registros = [
-  {id:'PLUM-0001',fecha:'2026-02-18',maquina:'VOLQUETE',codigo:'#102',conductor:'Santos Aguilar',turno:'B',inspector:'Inspector Flota',prioridad:'CRÍTICO',estado:'FUERA DE SERVICIO',criterios:{cs01:'R',cs02:'B',cs03:'R',cs04:'B',cs06:'B',cs07:'M',cs08:'M',cs09:'M',cs10:'M',cs11:'NA'},hallazgos:'Dispensador inoperativo. Sistema de lavado sin funcionamiento. Toberas obstruidas. Visibilidad deficiente.',medidas:'Reparación completa del sistema de lavado, recarga del dispensador, desbloqueo de toberas y evaluación de goma para posible cambio.',proxima:'-',obs:'Unidad fuera de servicio hasta subsanar todas las observaciones.',obsNivel:'CRITICO',obsRep:'Inspector Flota',obsJef:'Jefe de Mantenimiento',fotos:[],fechaReg:'2026-02-18T07:00:00.000Z'},
-  {id:'PLUM-0002',fecha:'2026-02-18',maquina:'VOLQUETE',codigo:'#104',conductor:'Kenyo Pairazaman',turno:'B',inspector:'Inspector Flota',prioridad:'CRÍTICO',estado:'FUERA DE SERVICIO',criterios:{cs01:'R',cs02:'B',cs03:'R',cs04:'B',cs06:'R',cs07:'M',cs08:'M',cs09:'M',cs10:'M',cs11:'NA'},hallazgos:'Goma con desgaste. Sistema de lavado sin funcionamiento (no bota líquido). Toberas obstruidas. Visibilidad deficiente.',medidas:'Cambio de goma de plumilla, desobstrucción de toberas, reparación del sistema de lavado. Retornar al servicio solo cuando todas las observaciones sean subsanadas.',proxima:'-',obs:'Reparación inmediata requerida. No operar hasta subsanar.',obsNivel:'CRITICO',obsRep:'Inspector Flota',obsJef:'Jefe de Mantenimiento',fotos:[],fechaReg:'2026-02-18T07:10:00.000Z'},
-  {id:'PLUM-0003',fecha:'2026-02-19',maquina:'CISTERNA',codigo:'T5H-984',conductor:'Hubert Alvites',turno:'B',inspector:'Inspector Flota',prioridad:'CRÍTICO',estado:'FUERA DE SERVICIO',criterios:{cs01:'R',cs02:'B',cs03:'R',cs04:'B',cs06:'R',cs07:'M',cs08:'M',cs09:'M',cs10:'M',cs11:'NA'},hallazgos:'Goma con desgaste. Sistema de lavado sin funcionamiento. Toberas obstruidas. Visibilidad deficiente.',medidas:'Cambio de goma, desobstrucción de toberas, reparación del sistema de lavado. No retornar al servicio hasta subsanar y verificar todas las observaciones.',proxima:'-',obs:'Reparación inmediata requerida. No operar hasta subsanar.',obsNivel:'CRITICO',obsRep:'Inspector Flota',obsJef:'Jefe de Mantenimiento',fotos:[],fechaReg:'2026-02-19T07:00:00.000Z'},
-  {id:'PLUM-0004',fecha:'2026-02-18',maquina:'CARGADOR FRONTAL',codigo:'CAT-966 H16',conductor:'Jose Sullon',turno:'B',inspector:'Inspector Flota',prioridad:'URGENTE',estado:'MANTENIMIENTO CORRECTIVO',criterios:{cs01:'R',cs02:'R',cs03:'B',cs04:'B',cs06:'B',cs07:'B',cs08:'B',cs09:'B',cs10:'R',cs11:'NA'},hallazgos:'Plumilla descentrada sobre el parabrisas. Presión de contacto inadecuada. Limpieza y visibilidad insuficientes. En condiciones de lluvia no garantiza visibilidad mínima.',medidas:'Centrar y ajustar plumilla, evaluar cambio de goma, revisar brazo portaplumilla y verificar sistema de lavado y toberas.',proxima:'-',obs:'Riesgo en condiciones de lluvia. Corrección urgente.',obsNivel:'ADVERTENCIA',obsRep:'Inspector Flota',obsJef:'Jefe de Mantenimiento',fotos:[],fechaReg:'2026-02-18T07:20:00.000Z'},
-  {id:'PLUM-0005',fecha:'2026-02-18',maquina:'CARGADOR FRONTAL',codigo:'966 H15',conductor:'Sin asignar',turno:'A',inspector:'Inspector Flota',prioridad:'URGENTE',estado:'MANTENIMIENTO CORRECTIVO',criterios:{cs01:'R',cs02:'R',cs03:'R',cs04:'R',cs06:'R',cs07:'M',cs08:'R',cs09:'M',cs10:'R',cs11:'NA'},hallazgos:'Goma con endurecimiento. Sistema de lavado no funciona (no bota líquido). Toberas obstruidas. Múltiples criterios en nivel regular.',medidas:'Limpieza y desobstrucción de toberas, revisión del sistema de líquido, reparación del sistema de lavado, evaluación de goma por endurecimiento.',proxima:'-',obs:'Múltiples fallas. Requiere mantenimiento correctivo integral.',obsNivel:'ADVERTENCIA',obsRep:'Inspector Flota',obsJef:'Jefe de Mantenimiento',fotos:[],fechaReg:'2026-02-18T07:30:00.000Z'},
-  {id:'PLUM-0006',fecha:'2026-02-18',maquina:'TRACTOR',codigo:'CAT D8T-01',conductor:'Manuel Gallo',turno:'B',inspector:'Inspector Flota',prioridad:'URGENTE',estado:'MANTENIMIENTO CORRECTIVO',criterios:{cs01:'B',cs02:'B',cs03:'R',cs04:'B',cs06:'B',cs07:'M',cs08:'R',cs09:'M',cs10:'R',cs11:'NA'},hallazgos:'Sistema de lavado inoperativo (no sale líquido). Toberas obstruidas. Visibilidad irregular. Goma y brazo portaplumilla en buen estado.',medidas:'Desobstrucción de toberas, revisión del sistema de líquido limpiaparabrisas.',proxima:'-',obs:'Fallas en sistema de rociado. Corrección requerida.',obsNivel:'ADVERTENCIA',obsRep:'Inspector Flota',obsJef:'Jefe de Mantenimiento',fotos:[],fechaReg:'2026-02-18T07:40:00.000Z'},
-  {id:'PLUM-0007',fecha:'2026-02-18',maquina:'VOLQUETE',codigo:'TQF-919',conductor:'Jose Carranza',turno:'B',inspector:'Inspector Flota',prioridad:'URGENTE',estado:'MANTENIMIENTO CORRECTIVO',criterios:{cs01:'M',cs02:'R',cs03:'R',cs04:'R',cs06:'R',cs07:'R',cs08:'R',cs09:'M',cs10:'R',cs11:'NA'},hallazgos:'Goma con desgaste de jebe. Sistema de lavado con bajo caudal (bota poco líquido). Toberas obstruidas. Visibilidad general regular.',medidas:'Desobstrucción de toberas, revisión del bajo caudal del sistema de lavado, evaluación de cambio de goma por desgaste de jebe.',proxima:'-',obs:'Deterioro progresivo. Evaluación de cambio de goma urgente.',obsNivel:'ADVERTENCIA',obsRep:'Inspector Flota',obsJef:'Jefe de Mantenimiento',fotos:[],fechaReg:'2026-02-18T07:50:00.000Z'},
-  {id:'PLUM-0008',fecha:'2026-02-19',maquina:'CARGADOR FRONTAL',codigo:'CAT-966 H17',conductor:'Jose Quispe',turno:'A',inspector:'Inspector Flota',prioridad:'URGENTE',estado:'MANTENIMIENTO CORRECTIVO',criterios:{cs01:'B',cs02:'B',cs03:'R',cs04:'B',cs06:'B',cs07:'M',cs08:'R',cs09:'M',cs10:'M',cs11:'NA'},hallazgos:'PARABRISAS CON RAJADURA VISIBLE — riesgo directo para el operador. Sistema de lavado inoperativo. Toberas obstruidas. Visibilidad deficiente.',medidas:'Cambio del parabrisas (URGENTE), desbloqueo de toberas, revisión técnica completa del sistema de lavado. No retornar al servicio hasta subsanar todo.',proxima:'-',obs:'PELIGRO: Parabrisas rajado. No operar hasta cambio de parabrisas y reparación completa.',obsNivel:'CRITICO',obsRep:'Inspector Flota',obsJef:'Jefe de Mantenimiento',fotos:[],fechaReg:'2026-02-19T07:10:00.000Z'},
-  {id:'PLUM-0009',fecha:'2026-02-18',maquina:'CARGADOR FRONTAL',codigo:'CAT-966 H18',conductor:'Carlos Hachuca',turno:'B',inspector:'Inspector Flota',prioridad:'MODERADO',estado:'LIMPIEZA PREVENTIVA',criterios:{cs01:'B',cs02:'B',cs03:'R',cs04:'B',cs06:'B',cs07:'B',cs08:'B',cs09:'B',cs10:'B',cs11:'NA'},hallazgos:'Material compactado en goma. Resto de componentes en buen estado.',medidas:'Limpieza general del parabrisas antes del inicio del próximo turno.',proxima:'-',obs:'Solo requiere limpieza preventiva.',obsNivel:'INFO',obsRep:'Inspector Flota',obsJef:'Jefe de Mantenimiento',fotos:[],fechaReg:'2026-02-18T08:00:00.000Z'},
-  {id:'PLUM-0010',fecha:'2026-02-19',maquina:'CARGADOR FRONTAL',codigo:'966L-4',conductor:'Lito Ipanague Bueno',turno:'A',inspector:'Inspector Flota',prioridad:'MODERADO',estado:'LIMPIEZA PREVENTIVA',criterios:{cs01:'B',cs02:'B',cs03:'R',cs04:'B',cs06:'B',cs07:'B',cs08:'B',cs09:'B',cs10:'B',cs11:'NA'},hallazgos:'Material compactado sobre el parabrisas. Sistema de lavado y plumillas en buen estado.',medidas:'Limpieza del parabrisas antes de operar.',proxima:'-',obs:'Solo requiere limpieza del parabrisas.',obsNivel:'INFO',obsRep:'Inspector Flota',obsJef:'Jefe de Mantenimiento',fotos:[],fechaReg:'2026-02-19T07:20:00.000Z'},
-  {id:'PLUM-0011',fecha:'2026-02-19',maquina:'BARREDORA',codigo:'Barredora #01',conductor:'Jose Biminchumo',turno:'A',inspector:'Inspector Flota',prioridad:'NORMAL',estado:'OPERATIVA',criterios:{cs01:'B',cs02:'B',cs03:'B',cs04:'B',cs06:'B',cs07:'B',cs08:'B',cs09:'B',cs10:'B',cs11:'NA'},hallazgos:'Todos los criterios aprobados.',medidas:'No se requiere intervención. Continuar con programa de mantenimiento preventivo.',proxima:'-',obs:'',obsNivel:'INFO',obsRep:'',obsJef:'',fotos:[],fechaReg:'2026-02-19T08:00:00.000Z'},
-  {id:'PLUM-0012',fecha:'2026-02-19',maquina:'CISTERNA',codigo:'CAB-948',conductor:'Hubert Alvites',turno:'A',inspector:'Inspector Flota',prioridad:'NORMAL',estado:'OPERATIVA',criterios:{cs01:'B',cs02:'B',cs03:'B',cs04:'B',cs06:'B',cs07:'B',cs08:'B',cs09:'B',cs10:'B',cs11:'NA'},hallazgos:'Todos los criterios aprobados. Dispensador operativo.',medidas:'No se requiere acción. Mantener rutina de inspección mensual.',proxima:'-',obs:'',obsNivel:'INFO',obsRep:'',obsJef:'',fotos:[],fechaReg:'2026-02-19T08:10:00.000Z'},
-  {id:'PLUM-0013',fecha:'2026-01-18',maquina:'CARGADOR FRONTAL',codigo:'CAT 966-5',conductor:'Henry Mariñas',turno:'A',inspector:'Inspector Flota',prioridad:'NORMAL',estado:'OPERATIVA',criterios:{cs01:'B',cs02:'B',cs03:'B',cs04:'B',cs06:'B',cs07:'B',cs08:'B',cs09:'B',cs10:'B',cs11:'NA'},hallazgos:'Todos los criterios aprobados.',medidas:'No se requiere intervención. Mantener mantenimiento preventivo.',proxima:'-',obs:'',obsNivel:'INFO',obsRep:'',obsJef:'',fotos:[],fechaReg:'2026-01-18T08:00:00.000Z'},
-  {id:'PLUM-0014',fecha:'2026-02-18',maquina:'CARGADOR FRONTAL',codigo:'CAT 966-4',conductor:'Sanchez Vilchez',turno:'B',inspector:'Inspector Flota',prioridad:'NORMAL',estado:'OPERATIVA',criterios:{cs01:'B',cs02:'B',cs03:'B',cs04:'B',cs06:'B',cs07:'B',cs08:'B',cs09:'B',cs10:'B',cs11:'NA'},hallazgos:'Todos los criterios aprobados.',medidas:'No se requiere acción. Continuar programa de mantenimiento preventivo.',proxima:'-',obs:'',obsNivel:'INFO',obsRep:'',obsJef:'',fotos:[],fechaReg:'2026-02-18T08:20:00.000Z'},
-  {id:'PLUM-0015',fecha:'2026-02-18',maquina:'VOLQUETE',codigo:'CFV-908',conductor:'Kenyo Poirazaman',turno:'B',inspector:'Inspector Flota',prioridad:'NORMAL',estado:'OPERATIVA',criterios:{cs01:'B',cs02:'B',cs03:'B',cs04:'B',cs06:'B',cs07:'B',cs08:'B',cs09:'B',cs10:'B',cs11:'NA'},hallazgos:'Todos los criterios aprobados.',medidas:'No se requiere acción. Mantener programa de mantenimiento preventivo.',proxima:'-',obs:'',obsNivel:'INFO',obsRep:'',obsJef:'',fotos:[],fechaReg:'2026-02-18T08:30:00.000Z'},
-  {id:'PLUM-0016',fecha:'2026-02-18',maquina:'TRACTOR',codigo:'D8T-1',conductor:'Jose Torres',turno:'A',inspector:'Inspector Flota',prioridad:'NORMAL',estado:'OPERATIVA',criterios:{cs01:'B',cs02:'B',cs03:'B',cs04:'B',cs06:'B',cs07:'B',cs08:'B',cs09:'B',cs10:'B',cs11:'B'},hallazgos:'Todos los criterios aprobados incluyendo plumilla trasera.',medidas:'No se requiere intervención. Mantener mantenimiento preventivo.',proxima:'-',obs:'',obsNivel:'INFO',obsRep:'',obsJef:'',fotos:[],fechaReg:'2026-02-18T08:40:00.000Z'}
-];
+counterRef.once('value', function(s){
+  if(s.val()) idCounter = parseInt(s.val());
+});
 
-
-function updateClock(){var now=new Date(),dias=['DOM','LUN','MAR','MIE','JUE','VIE','SAB'],m=['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];document.getElementById('clockDisplay').textContent=dias[now.getDay()]+' '+now.getDate()+' '+m[now.getMonth()]+' - '+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');}
+function updateClock() {
+  var now=new Date(), dias=['DOM','LUN','MAR','MIE','JUE','VIE','SAB'], mesesC=['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+  document.getElementById('clockDisplay').textContent=dias[now.getDay()]+' '+now.getDate()+' '+mesesC[now.getMonth()]+' - '+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+}
 setInterval(updateClock,1000); updateClock();
 document.getElementById('f-fecha').valueAsDate=new Date();
+
 var tabMap={dashboard:0,registro:1,historial:2,estadisticas:3,observaciones:4,calendario:5};
 
-function showTab(id){document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('tab-'+id).classList.add('active');document.querySelectorAll('.nav-btn')[tabMap[id]].classList.add('active');if(id==='calendario')renderCalendar();if(id==='historial')renderHistorial();if(id==='dashboard')renderDashboard();if(id==='estadisticas')renderEstadisticas();if(id==='observaciones')renderObservaciones();}
-
-function selectPrioridad(el,val){document.querySelectorAll('.prio-btn').forEach(function(b){b.classList.remove('selected');});el.classList.add('selected');document.getElementById('f-prioridad').value=val;
-  // Auto-set estado
-  var estado=document.getElementById('f-estado');
-  if(val==='CRÍTICO')estado.value='MANTENIMIENTO URGENTE';
-  else if(val==='URGENTE')estado.value='MANTENIMIENTO CORRECTIVO';
-  else if(val==='MODERADO')estado.value='LIMPIEZA PREVENTIVA';
-  else estado.value='OPERATIVA';
+function showTab(id) {
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('tab-'+id).classList.add('active');
+  document.querySelectorAll('.nav-btn')[tabMap[id]].classList.add('active');
+  if(id==='calendario') renderCalendar();
+  if(id==='historial') renderHistorial();
+  if(id==='dashboard') renderDashboard();
+  if(id==='estadisticas') renderEstadisticas();
+  if(id==='observaciones') renderObservaciones();
 }
-function selectMachine(name){document.getElementById('f-maquina').value=name;showTab('registro');}
-function selectNivel(nivel){document.getElementById('f-obs-nivel').value=nivel;['info','warning','critical'].forEach(function(n){document.getElementById('obs-btn-'+n).className='obs-nivel-btn';});if(nivel==='INFO')document.getElementById('obs-btn-info').classList.add('sel-info');if(nivel==='ADVERTENCIA')document.getElementById('obs-btn-warning').classList.add('sel-warning');if(nivel==='CRITICO')document.getElementById('obs-btn-critical').classList.add('sel-critical');}
 
-function colorCriterio(sel){sel.className='criterio-select val-'+sel.value;}
-document.querySelectorAll('.criterio-select').forEach(colorCriterio);
+function selectTipo(el,val) {
+  document.querySelectorAll('.tipo-btn').forEach(function(b){b.classList.remove('selected');});
+  el.classList.add('selected');
+  document.getElementById('f-tipo').value=val;
+}
 
-function guardarRegistro(){
+function selectMachine(name) { document.getElementById('f-maquina').value=name; showTab('registro'); }
+
+function guardarRegistro() {
   var maquina=document.getElementById('f-maquina').value;
   var fecha=document.getElementById('f-fecha').value;
-  var prioridad=document.getElementById('f-prioridad').value;
-  if(!maquina||!fecha||!prioridad){showToast('Complete Unidad, Fecha y Prioridad','warn');return;}
-  var id='PLUM-'+String(idCounter).padStart(4,'0');
-  var criterios={};
-  ['cs01','cs02','cs03','cs04','cs06','cs07','cs08','cs09','cs10','cs11'].forEach(function(c){criterios[c]=document.getElementById(c).value;});
+  var tipo=document.getElementById('f-tipo').value;
+  if(!maquina||!fecha||!tipo){showToast('Complete Unidad, Fecha y Tipo','warn');return;}
+  var id='MANT-'+String(idCounter).padStart(4,'0');
   var reg={id:id,fecha:fecha,maquina:maquina,
     codigo:document.getElementById('f-codigo').value||'-',
-    conductor:document.getElementById('f-conductor').value||'-',
-    turno:document.getElementById('f-turno').value,
-    inspector:document.getElementById('f-inspector').value||'-',
-    prioridad:prioridad,
+    tipo:tipo,
+    motivoCat:document.getElementById('f-motivo-cat').value||'-',
+    motivoDet:document.getElementById('f-motivo').value||'-',
+    supervisor:document.getElementById('f-supervisor').value||'-',
+    horaInicio:document.getElementById('f-hora-inicio').value||'-',
+    horaFin:document.getElementById('f-hora-fin').value||'-',
+    horasParo:parseFloat(document.getElementById('f-horas-paro').value)||0,
+    fueraPlanta:document.getElementById('f-fuera-planta').value,
+    fechaRetorno:document.getElementById('f-fecha-retorno').value||'-',
+    proximo:document.getElementById('f-proximo').value||'-',
     estado:document.getElementById('f-estado').value,
-    criterios:criterios,
-    hallazgos:document.getElementById('f-hallazgos').value||'-',
-    medidas:document.getElementById('f-medidas').value||'-',
-    proxima:document.getElementById('f-proxima').value||'-',
+    repuestos:document.getElementById('f-repuestos').value||'-',
     obs:document.getElementById('f-observaciones').value||'',
     obsNivel:document.getElementById('f-obs-nivel').value||'INFO',
     obsRep:document.getElementById('f-obs-reporta').value||'-',
     obsJef:document.getElementById('f-obs-jefatura').value||'-',
-    fotos:currentPhotos.slice(),tieneFotos:currentPhotos.length>0,
+    fotos:[],
+    tieneFotos:currentPhotos.length>0,
     fechaReg:new Date().toISOString()
   };
+  try { localStorage.setItem('fotos_'+id, JSON.stringify(currentPhotos)); } catch(e){}
+  registrosRef.child(id).set(reg);
+  counterRef.set(idCounter+1);
   idCounter++;
-  registros.unshift(reg);
-  showToast('Inspección '+id+' guardada correctamente');
-  renderDashboard();
+  showToast('Registro '+id+' guardado - visible para todo el equipo');
   clearForm();
 }
 
-function eliminarRegistro(id){
-  if(!confirm('Eliminar '+id+'? No se puede deshacer.'))return;
-  registros=registros.filter(function(r){return r.id!==id;});
-  renderDashboard();
-  renderHistorial();
+function eliminarRegistro(id) {
+  if(!confirm('Eliminar '+id+'? No se puede deshacer.')) return;
+  registrosRef.child(id).remove();
+  try { localStorage.removeItem('fotos_'+id); } catch(e){}
   showToast('Registro '+id+' eliminado');
 }
 
-function clearForm(){
-  ['f-maquina','f-codigo','f-conductor','f-inspector','f-hallazgos','f-medidas','f-proxima','f-observaciones','f-obs-reporta','f-obs-jefatura'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+function clearForm() {
+  ['f-maquina','f-codigo','f-motivo-cat','f-motivo','f-supervisor','f-hora-inicio','f-hora-fin','f-horas-paro','f-fecha-retorno','f-proximo','f-repuestos','f-observaciones','f-obs-reporta','f-obs-jefatura'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('f-fecha').valueAsDate=new Date();
-  document.getElementById('f-turno').value='A';
-  document.getElementById('f-estado').value='OPERATIVA';
-  document.getElementById('f-prioridad').value='';
+  document.getElementById('f-fuera-planta').value='NO';
+  document.getElementById('f-estado').value='PROGRAMADO';
+  document.getElementById('f-tipo').value='';
   document.getElementById('f-obs-nivel').value='INFO';
-  document.querySelectorAll('.prio-btn').forEach(function(b){b.classList.remove('selected');});
-  ['cs01','cs02','cs03','cs04','cs06','cs07','cs08','cs09','cs10','cs11'].forEach(function(c){var s=document.getElementById(c);s.value='B';colorCriterio(s);});
+  document.querySelectorAll('.tipo-btn').forEach(function(b){b.classList.remove('selected');});
   currentPhotos=[]; document.getElementById('photo-preview').innerHTML=''; document.getElementById('photo-count').textContent='';
   selectNivel('INFO');
 }
 
-function prioBadge(p){if(p==='CRÍTICO')return 'badge-red';if(p==='URGENTE')return 'badge-orange';if(p==='MODERADO')return 'badge-blue';return 'badge-green';}
-function estadoBadge(e){if(e==='FUERA DE SERVICIO'||e==='MANTENIMIENTO URGENTE')return 'badge-red';if(e==='MANTENIMIENTO CORRECTIVO')return 'badge-orange';if(e==='LIMPIEZA PREVENTIVA')return 'badge-blue';return 'badge-green';}
+function tipoBadge(t){if(t==='PREVENTIVO')return 'badge-blue';if(t==='CORRECTIVO')return 'badge-orange';if(t==='EMERGENCIA')return 'badge-red';return 'badge-green';}
+function estadoBadge(e){if(e==='COMPLETADO')return 'badge-green';if(e==='EN PROCESO')return 'badge-orange';if(e==='PENDIENTE')return 'badge-red';return 'badge-blue';}
 function nivelBadge(n){if(n==='CRITICO')return 'badge-red';if(n==='ADVERTENCIA')return 'badge-orange';return 'badge-blue';}
 
-function renderDashboard(){
+function renderDashboard() {
   document.getElementById('stat-total').textContent=registros.length;
-  document.getElementById('stat-critico').textContent=registros.filter(function(r){return r.prioridad==='CRÍTICO';}).length;
-  document.getElementById('stat-urgente').textContent=registros.filter(function(r){return r.prioridad==='URGENTE';}).length;
-  document.getElementById('stat-operativa').textContent=registros.filter(function(r){return r.prioridad==='NORMAL';}).length;
-  document.getElementById('stat-mant').textContent=registros.filter(function(r){return r.prioridad==='CRÍTICO'||r.prioridad==='URGENTE';}).length;
+  var fuera=registros.filter(function(r){return r.fueraPlanta==='SI'&&r.estado!=='COMPLETADO';}).length;
+  document.getElementById('stat-fuera').textContent=fuera;
+  document.getElementById('stat-op').textContent=5-fuera;
+  document.getElementById('stat-horas').textContent=registros.reduce(function(s,r){return s+r.horasParo;},0).toFixed(1)+'h';
+  var today=new Date(),in7=new Date(); in7.setDate(today.getDate()+7);
+  document.getElementById('stat-prox').textContent=registros.filter(function(r){if(!r.proximo||r.proximo==='-')return false;var d=new Date(r.proximo);return d>=today&&d<=in7;}).length;
   var M=['CARGADOR FRONTAL','TRACTOR','CISTERNA','BARREDORA','VOLQUETE'],A=['CF','TR','CI','BA','VO'];
   M.forEach(function(m,i){
     var all=registros.filter(function(r){return r.maquina===m;});
-    var last=all[0];
-    document.getElementById('count-'+A[i]).textContent=all.length+' inspeccion'+(all.length!==1?'es':'');
+    var rec=registros.find(function(r){return r.maquina===m&&r.estado!=='COMPLETADO';});
+    document.getElementById('count-'+A[i]).textContent=all.length+' intervencion'+(all.length!==1?'es':'');
     var el=document.getElementById('status-'+A[i]);
-    if(last&&(last.prioridad==='CRÍTICO')){el.textContent='FUERA DE SERVICIO';el.className='machine-status status-out';}
-    else if(last&&last.prioridad==='URGENTE'){el.textContent='MANTENIMIENTO';el.className='machine-status status-maint';}
+    if(rec&&rec.fueraPlanta==='SI'){el.textContent='FUERA DE PLANTA';el.className='machine-status status-out';}
+    else if(rec&&rec.estado==='EN PROCESO'){el.textContent='EN MANTENIMIENTO';el.className='machine-status status-maint';}
     else{el.textContent='OPERATIVO';el.className='machine-status status-ok';}
   });
   var tbody=document.getElementById('recent-tbody');
   var slice=registros.slice(0,5);
-  if(!slice.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text2);padding:32px">Sin registros aún.</td></tr>';return;}
-  tbody.innerHTML=slice.map(function(r){var hasObs=r.obs&&r.obs.trim().length>0;return '<tr><td class="mono" style="color:var(--red)">'+r.id+'</td><td>'+r.fecha+'</td><td style="font-weight:600">'+r.maquina+'</td><td class="mono">'+(r.codigo||'-')+'</td><td>'+(r.conductor||'-')+'</td><td><span class="badge '+prioBadge(r.prioridad)+'">'+r.prioridad+'</span></td><td><span class="badge '+estadoBadge(r.estado)+'">'+r.estado+'</span></td><td>'+(hasObs?'<span class="badge '+nivelBadge(r.obsNivel)+'">'+r.obsNivel+'</span>':'-')+'</td></tr>';}).join('');
+  if(!slice.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--text2);padding:32px">Sin registros aun.</td></tr>';return;}
+  tbody.innerHTML=slice.map(function(r){var hasObs=r.obs&&r.obs.trim().length>0;return '<tr><td class="mono" style="color:var(--red)">'+r.id+'</td><td>'+r.fecha+'</td><td style="font-weight:600">'+r.maquina+'</td><td><span class="badge '+tipoBadge(r.tipo)+'">'+r.tipo+'</span></td><td style="font-size:12px;color:var(--text2)">'+(r.motivoCat||'-')+'</td><td>'+r.supervisor+'</td><td class="mono">'+r.horasParo+'h</td><td><span class="badge '+estadoBadge(r.estado)+'">'+r.estado+'</span></td><td>'+(hasObs?'<span class="badge '+nivelBadge(r.obsNivel)+'">'+r.obsNivel+'</span>':'-')+'</td></tr>';}).join('');
 }
 
-function renderHistorial(){
-  var filtroM=document.getElementById('filtro-maquina').value;
-  var filtroP=document.getElementById('filtro-prioridad').value;
-  var data=registros.filter(function(r){return(!filtroM||r.maquina===filtroM)&&(!filtroP||r.prioridad===filtroP);});
+function renderHistorial() {
+  var filtro=document.getElementById('filtro-maquina').value;
+  var data=filtro?registros.filter(function(r){return r.maquina===filtro;}):registros;
   var tbody=document.getElementById('historial-tbody');
-  if(!data.length){tbody.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--text2);padding:32px">Sin registros.</td></tr>';return;}
   tbody.innerHTML='';
+  if(!data.length){
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td colspan="13" style="text-align:center;color:var(--text2);padding:32px">Sin registros.</td>';
+    tbody.appendChild(tr); return;
+  }
   data.forEach(function(r){
     var hasObs=r.obs&&r.obs.trim().length>0;
     var tr=document.createElement('tr');
-    tr.innerHTML='<td class="mono" style="color:var(--red)">'+r.id+'</td><td>'+r.fecha+'</td><td style="font-weight:600">'+r.maquina+'</td><td class="mono">'+(r.codigo||'-')+'</td><td>'+(r.conductor||'-')+'</td><td><span class="badge '+prioBadge(r.prioridad)+'">'+r.prioridad+'</span></td><td><span class="badge '+estadoBadge(r.estado)+'">'+r.estado+'</span></td><td>'+(hasObs?'<span class="badge '+nivelBadge(r.obsNivel)+'">'+r.obsNivel+'</span>':'-')+'</td>';
-    var tdV=document.createElement('td');var bV=document.createElement('button');bV.className='btn btn-secondary';bV.style.cssText='padding:3px 10px;font-size:10px';bV.textContent='VER';bV.onclick=(function(id){return function(){openDetail(id);};})(r.id);tdV.appendChild(bV);tr.appendChild(tdV);
-    var tdD=document.createElement('td');var bD=document.createElement('button');bD.className='btn';bD.style.cssText='padding:3px 10px;font-size:10px;background:rgba(204,26,26,.1);color:var(--red);border:1px solid rgba(204,26,26,.3)';bD.textContent='ELIMINAR';bD.onclick=(function(id){return function(){eliminarRegistro(id);};})(r.id);tdD.appendChild(bD);tr.appendChild(tdD);
+    tr.innerHTML='<td class="mono" style="color:var(--red)">'+r.id+'</td><td>'+r.fecha+'</td><td style="font-weight:600">'+r.maquina+'</td><td class="mono">'+(r.codigo||'-')+'</td><td><span class="badge '+tipoBadge(r.tipo)+'">'+r.tipo+'</span></td><td style="font-size:12px">'+(r.motivoCat||'-')+'</td><td>'+r.supervisor+'</td><td class="mono">'+r.horasParo+'h</td><td>'+r.fueraPlanta+'</td><td><span class="badge '+estadoBadge(r.estado)+'">'+r.estado+'</span></td><td>'+(hasObs?'<span class="badge '+nivelBadge(r.obsNivel)+'">'+r.obsNivel+'</span>':'-')+'</td>';
+    var tdVer=document.createElement('td');
+    var btnVer=document.createElement('button');
+    btnVer.className='btn btn-secondary';
+    btnVer.style.cssText='padding:3px 10px;font-size:10px';
+    btnVer.textContent='VER';
+    btnVer.onclick=(function(id){return function(){openDetail(id);};})(r.id);
+    tdVer.appendChild(btnVer); tr.appendChild(tdVer);
+    var tdDel=document.createElement('td');
+    var btnDel=document.createElement('button');
+    btnDel.className='btn';
+    btnDel.style.cssText='padding:3px 10px;font-size:10px;background:rgba(204,26,26,.1);color:var(--red);border:1px solid rgba(204,26,26,.3)';
+    btnDel.textContent='ELIMINAR';
+    btnDel.onclick=(function(id){return function(){eliminarRegistro(id);};})(r.id);
+    tdDel.appendChild(btnDel); tr.appendChild(tdDel);
     tbody.appendChild(tr);
   });
 }
 
-function renderObservaciones(){
-  var filtroN=document.getElementById('filtro-obs-nivel').value;
-  var filtroM=document.getElementById('filtro-obs-maq').value;
-  var data=registros.filter(function(r){var hasH=r.hallazgos&&r.hallazgos!=='-';var hasO=r.obs&&r.obs.trim().length>0;if(!hasH&&!hasO)return false;if(filtroN&&r.obsNivel!==filtroN)return false;if(filtroM&&r.maquina!==filtroM)return false;return true;});
+function renderObservaciones() {
+  var filtroNivel=document.getElementById('filtro-obs-nivel').value;
+  var filtroMaq=document.getElementById('filtro-obs-maq').value;
+  var data=registros.filter(function(r){var hasMot=r.motivoCat&&r.motivoCat!=='-';var hasObs=r.obs&&r.obs.trim().length>0;if(!hasMot&&!hasObs)return false;if(filtroNivel&&r.obsNivel!==filtroNivel)return false;if(filtroMaq&&r.maquina!==filtroMaq)return false;return true;});
   var cont=document.getElementById('obs-feed-container');
   if(!data.length){cont.innerHTML='<div style="text-align:center;color:var(--text2);padding:48px;background:var(--surface);border:1px solid var(--border);border-radius:6px">Sin observaciones.</div>';return;}
-  cont.innerHTML=data.map(function(r){var hasH=r.hallazgos&&r.hallazgos!=='-';var hasO=r.obs&&r.obs.trim().length>0;var nc=r.obsNivel||'INFO';return '<div class="obs-card c-'+nc+'"><div class="obs-card-top"><span class="mono" style="color:var(--red);font-size:11px">'+r.id+'</span><span class="badge badge-gray">'+r.fecha+'</span><span class="badge badge-gray">'+r.maquina+'</span><span class="badge '+prioBadge(r.prioridad)+'">'+r.prioridad+'</span>'+(hasO?'<span class="badge '+nivelBadge(nc)+'">'+nc+'</span>':'')+'<span style="font-size:12px;color:var(--text2)">Inspector: <strong style="color:var(--text)">'+r.inspector+'</strong></span></div>'+(hasH?'<div class="obs-card-motivo"><div class="obs-card-motivo-label">Hallazgos principales</div><div class="obs-card-motivo-text">'+r.hallazgos+'</div></div>':'')+(hasO?'<div class="obs-card-obs c-'+nc+'"><div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);margin-bottom:6px">Observación para jefatura</div><div style="font-size:13px;color:var(--text);line-height:1.7">'+r.obs+'</div></div>':'')+'<div class="obs-card-meta"><span>Conductor: <strong>'+(r.conductor||'-')+'</strong></span><span>Estado: <strong>'+r.estado+'</strong></span><span>Turno: <strong>'+r.turno+'</strong></span></div></div>';}).join('');
+  cont.innerHTML=data.map(function(r){var hasMot=r.motivoCat&&r.motivoCat!=='-';var hasDet=r.motivoDet&&r.motivoDet!=='-'&&r.motivoDet.trim();var hasObs=r.obs&&r.obs.trim().length>0;var nc=r.obsNivel||'INFO';return '<div class="obs-card c-'+nc+'"><div class="obs-card-top"><span class="mono" style="color:var(--red);font-size:11px">'+r.id+'</span><span class="badge badge-gray">'+r.fecha+'</span><span class="badge badge-gray">'+r.maquina+'</span><span class="badge '+tipoBadge(r.tipo)+'">'+r.tipo+'</span>'+(hasObs?'<span class="badge '+nivelBadge(nc)+'">'+nc+'</span>':'')+'<span style="font-size:12px;color:var(--text2)">Supervisor: <strong style="color:var(--text)">'+r.supervisor+'</strong></span></div>'+(hasMot||hasDet?'<div class="obs-card-motivo"><div class="obs-card-motivo-label">Motivo de ingreso</div>'+(hasMot?'<div class="obs-card-motivo-cat">'+r.motivoCat+'</div>':'')+(hasDet?'<div class="obs-card-motivo-text">'+r.motivoDet+'</div>':'')+'</div>':'')+(hasObs?'<div class="obs-card-obs c-'+nc+'"><div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);margin-bottom:6px">Observacion para jefatura</div><div style="font-size:13px;color:var(--text);line-height:1.7">'+r.obs+'</div></div>':'')+'<div class="obs-card-meta"><span>Horas de paro: <strong>'+r.horasParo+'h</strong></span><span>Estado: <strong>'+r.estado+'</strong></span><span>Fuera de planta: <strong>'+r.fueraPlanta+'</strong></span></div></div>';}).join('');
 }
 
-function renderEstadisticas(){
+function renderEstadisticas() {
   var filtroEl=document.getElementById('filtro-estadistica');
   var filtroUnidad=filtroEl?filtroEl.value:'';
   var data=filtroUnidad?registros.filter(function(r){return r.maquina===filtroUnidad;}):registros;
+  var tituloEl=document.querySelector('#tab-estadisticas .section-header h2');
+  if(tituloEl) tituloEl.textContent=filtroUnidad?('KPI -- '+filtroUnidad):'Indicadores Clave -- KPI';
   document.getElementById('kpi-total').textContent=data.length;
-  document.getElementById('kpi-critico').textContent=data.filter(function(r){return r.prioridad==='CRÍTICO'||r.prioridad==='URGENTE';}).length;
-  document.getElementById('kpi-hallazgos').textContent=data.filter(function(r){return r.hallazgos&&r.hallazgos!=='-';}).length;
-  document.getElementById('kpi-operativas').textContent=data.filter(function(r){return r.prioridad==='NORMAL';}).length;
+  document.getElementById('kpi-horas').textContent=data.reduce(function(s,r){return s+r.horasParo;},0).toFixed(1)+'h';
+  document.getElementById('kpi-fuera').textContent=data.filter(function(r){return r.fueraPlanta==='SI';}).length;
+  document.getElementById('kpi-comp').textContent=data.filter(function(r){return r.estado==='COMPLETADO';}).length;
   var M=['CARGADOR FRONTAL','TRACTOR','CISTERNA','BARREDORA','VOLQUETE'],A=['CF','TR','CI','BA','VO'],MC=['#cc1a1a','#1a5fa0','#1a7a45','#c06010','#6a7080'];
   function bars(elId,labels,vals,colors,unit){unit=unit||'';var max=Math.max.apply(null,vals.concat([1]));document.getElementById(elId).innerHTML=labels.map(function(l,i){var pct=(vals[i]/max*100).toFixed(1);return '<div class="bar-row"><div class="bar-label">'+l+'</div><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:'+(colors[i]||'#cc1a1a')+'">'+vals[i]+unit+'</div></div><div class="bar-val">'+vals[i]+unit+'</div></div>';}).join('');}
   bars('ch-maq',A,M.map(function(m){return data.filter(function(r){return r.maquina===m;}).length;}),MC);
-  var P=['CRÍTICO','URGENTE','MODERADO','NORMAL'];
-  bars('ch-prio',P,P.map(function(p){return data.filter(function(r){return r.prioridad===p;}).length;}),['#cc1a1a','#c06010','#b8860b','#1a7a45']);
-  var ES=['OPERATIVA','LIMPIEZA PREVENTIVA','MANT. CORRECTIVO','MANT. URGENTE','FUERA DE SERVICIO'];
-  var ESmap={'OPERATIVA':'OPERATIVA','LIMPIEZA PREVENTIVA':'LIMPIEZA PREVENTIVA','MANT. CORRECTIVO':'MANTENIMIENTO CORRECTIVO','MANT. URGENTE':'MANTENIMIENTO URGENTE','FUERA DE SERVICIO':'FUERA DE SERVICIO'};
-  bars('ch-estado',['OPERATIVA','PREV.','CORRECTIVO','URGENTE','F.SERVICIO'],ES.map(function(e){return data.filter(function(r){return r.estado===ESmap[e];}).length;}),['#1a7a45','#1a5fa0','#c06010','#cc1a1a','#6a7080']);
-  // Criterios
-  function critBar(elId,ckey){var B=0,R=0,M2=0;data.forEach(function(r){if(r.criterios){var v=r.criterios[ckey];if(v==='B')B++;else if(v==='R')R++;else if(v==='M')M2++;}});bars(elId,['Bueno','Regular','Malo'],[B,R,M2],['#1a7a45','#c06010','#cc1a1a']);}
-  critBar('ch-cs01','cs01'); critBar('ch-cs07','cs07'); critBar('ch-cs09','cs09');
-  // Por mes
-  var yearSet=new Set();data.forEach(function(r){if(r.fecha)yearSet.add(r.fecha.slice(0,4));});var years=Array.from(yearSet).sort();var ysel=document.getElementById('filtro-mes-year');var curY=ysel.value||years[years.length-1]||String(new Date().getFullYear());if(!ysel.options.length||ysel.dataset.built!=='1'){ysel.innerHTML=years.map(function(y){return '<option value="'+y+'"'+(y===curY?' selected':'')+'>'+y+'</option>';}).join('');ysel.dataset.built='1';}
-  var meses=['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
-  var byMes=meses.map(function(_,i){return data.filter(function(r){return r.fecha&&r.fecha.slice(0,4)===curY&&parseInt(r.fecha.slice(5,7))-1===i;}).length;});
-  bars('ch-mes',meses,byMes,meses.map(function(){return '#cc1a1a';}));
-  // Por dia
-  var dYSel=document.getElementById('filtro-dia-year');var dMSel=document.getElementById('filtro-dia-mes');if(!dYSel.options.length||dYSel.dataset.built!=='1'){dYSel.innerHTML=years.map(function(y){return '<option value="'+y+'"'+(y===curY?' selected':'')+'>'+y+'</option>';}).join('');dYSel.dataset.built='1';}
-  var dY=dYSel.value||curY,dM=parseInt(dMSel.value);var dim=new Date(parseInt(dY),dM+1,0).getDate();var dias=[];for(var d=1;d<=dim;d++)dias.push(d);var byDia=dias.map(function(d){var ds=dY+'-'+String(dM+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');return data.filter(function(r){return r.fecha===ds;}).length;});
-  var maxD=Math.max.apply(null,byDia.concat([1]));document.getElementById('ch-dia').innerHTML='<div style="display:flex;align-items:flex-end;gap:3px;height:80px;padding:0 2px">'+dias.map(function(d,i){var pct=(byDia[i]/maxD*100);return '<div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:18px"><div style="width:100%;background:'+(byDia[i]>0?'#cc1a1a':'var(--surface2)')+';height:'+Math.max(pct,4)+'%;border-radius:2px 2px 0 0;cursor:pointer" title="Día '+d+': '+byDia[i]+' inspecciones"></div><div style="font-size:9px;color:var(--text3);margin-top:3px">'+d+'</div></div>';}).join('')+'</div>';
-  // Tabla inspectores
-  var inspMap={};data.forEach(function(r){var s=r.inspector||'Sin asignar';if(!inspMap[s])inspMap[s]={total:0,critico:0,urgente:0,normal:0,obsC:0};inspMap[s].total++;if(r.prioridad==='CRÍTICO')inspMap[s].critico++;if(r.prioridad==='URGENTE')inspMap[s].urgente++;if(r.prioridad==='NORMAL')inspMap[s].normal++;if(r.obs&&r.obsNivel==='CRITICO')inspMap[s].obsC++;});
-  var tbody=document.getElementById('tabla-inspectores');
-  var entries=Object.keys(inspMap).map(function(k){return[k,inspMap[k]];}).sort(function(a,b){return b[1].total-a[1].total;});
+  var motivoMap={};data.forEach(function(r){var k=r.motivoCat||'Sin especificar';motivoMap[k]=(motivoMap[k]||0)+1;});
+  var mEntries=Object.keys(motivoMap).map(function(k){return[k,motivoMap[k]];}).sort(function(a,b){return b[1]-a[1];}).slice(0,6);
+  var mMax=Math.max.apply(null,mEntries.map(function(e){return e[1];}).concat([1]));
+  document.getElementById('ch-motivo').innerHTML=mEntries.length?mEntries.map(function(e){var pct=(e[1]/mMax*100).toFixed(1);var lbl=e[0].length>13?e[0].slice(0,12)+'.':e[0];return '<div class="bar-row"><div class="bar-label" style="font-size:9px">'+lbl+'</div><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:#cc1a1a">'+e[1]+'</div></div><div class="bar-val">'+e[1]+'</div></div>';}).join(''):'<div style="color:var(--text2);padding:12px;font-size:12px">Sin datos</div>';
+  var T=['PREVENTIVO','CORRECTIVO','PREDICTIVO','EMERGENCIA'];
+  bars('ch-tipo',T,T.map(function(t){return data.filter(function(r){return r.tipo===t;}).length;}),['#1a5fa0','#c06010','#1a7a45','#cc1a1a']);
+  bars('ch-horas',A,M.map(function(m){return parseFloat(data.filter(function(r){return r.maquina===m;}).reduce(function(s,r){return s+r.horasParo;},0).toFixed(1));}),MC,'h');
+  var E=['PROGRAMADO','EN PROCESO','COMPLETADO','PENDIENTE'];
+  bars('ch-estado',E,E.map(function(e){return data.filter(function(r){return r.estado===e;}).length;}),['#1a5fa0','#c06010','#1a7a45','#cc1a1a']);
+  bars('ch-fuera',A,M.map(function(m){return data.filter(function(r){return r.maquina===m&&r.fueraPlanta==='SI';}).length;}),MC);
+  var supMap={};data.forEach(function(r){var s=r.supervisor||'Sin asignar';if(!supMap[s])supMap[s]={int:0,horas:0,comp:0,pend:0,crit:0};supMap[s].int++;supMap[s].horas+=(r.horasParo||0);if(r.estado==='COMPLETADO')supMap[s].comp++;if(r.estado==='PENDIENTE')supMap[s].pend++;if(r.obs&&r.obsNivel==='CRITICO')supMap[s].crit++;});
+  var tbody=document.getElementById('tabla-supervisores');
+  var entries=Object.keys(supMap).map(function(k){return[k,supMap[k]];}).sort(function(a,b){return b[1].int-a[1].int;});
   if(!entries.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text2);padding:24px">Sin datos.</td></tr>';return;}
-  tbody.innerHTML=entries.map(function(e){var s=e[0],d=e[1];return '<tr><td style="font-weight:600">'+s+'</td><td class="mono" style="text-align:center;color:var(--blue);font-weight:700">'+d.total+'</td><td style="text-align:center"><span class="badge badge-red">'+d.critico+'</span></td><td style="text-align:center"><span class="badge badge-orange">'+d.urgente+'</span></td><td style="text-align:center"><span class="badge badge-green">'+d.normal+'</span></td><td style="text-align:center">'+(d.obsC>0?'<span class="badge badge-red">'+d.obsC+'</span>':'-')+'</td></tr>';}).join('');
+  tbody.innerHTML=entries.map(function(e){var s=e[0],d=e[1];return '<tr><td style="font-weight:600">'+s+'</td><td class="mono" style="text-align:center;color:var(--red);font-weight:700">'+d.int+'</td><td class="mono" style="text-align:center">'+d.horas.toFixed(1)+'h</td><td style="text-align:center"><span class="badge badge-green">'+d.comp+'</span></td><td style="text-align:center"><span class="badge badge-orange">'+d.pend+'</span></td><td style="text-align:center">'+(d.crit>0?'<span class="badge badge-red">'+d.crit+'</span>':'-')+'</td></tr>';}).join('');
 }
+
+function handlePhotos(files){Array.from(files).slice(0,5-currentPhotos.length).forEach(function(file){if(!file.type.startsWith('image/'))return;var reader=new FileReader();reader.onload=function(e){currentPhotos.push({name:file.name,data:e.target.result});renderPhotoPreview();};reader.readAsDataURL(file);});}
+function renderPhotoPreview(){var g=document.getElementById('photo-preview'),c=document.getElementById('photo-count');if(!currentPhotos.length){g.innerHTML='';c.textContent='';return;}g.innerHTML=currentPhotos.map(function(p,i){return '<div class="photo-thumb"><img src="'+p.data+'" alt="'+p.name+'"><div class="photo-label">'+p.name+'</div><button class="photo-remove" onclick="removePhoto('+i+')">X</button></div>';}).join('');c.textContent=currentPhotos.length+' fotografia(s) adjunta(s)';}
+function removePhoto(idx){currentPhotos.splice(idx,1);renderPhotoPreview();}
+
+document.addEventListener('DOMContentLoaded',function(){
+  var area=document.getElementById('upload-area');
+  if(area){area.addEventListener('dragover',function(e){e.preventDefault();area.classList.add('dragover');});area.addEventListener('dragleave',function(){area.classList.remove('dragover');});area.addEventListener('drop',function(e){e.preventDefault();area.classList.remove('dragover');handlePhotos(e.dataTransfer.files);});}
+  var md=document.getElementById('modal-detail');
+  if(md)md.addEventListener('click',function(e){if(e.target===this)closeDetail();});
+});
+
+function selectNivel(nivel){document.getElementById('f-obs-nivel').value=nivel;['info','warning','critical'].forEach(function(n){document.getElementById('obs-btn-'+n).className='obs-nivel-btn';});if(nivel==='INFO')document.getElementById('obs-btn-info').classList.add('sel-info');if(nivel==='ADVERTENCIA')document.getElementById('obs-btn-warning').classList.add('sel-warning');if(nivel==='CRITICO')document.getElementById('obs-btn-critical').classList.add('sel-critical');}
+
+function openDetail(id){
+  var r=registros.find(function(x){return x.id===id;});
+  if(!r)return;
+  document.getElementById('detail-id').textContent=r.id+' - '+r.maquina;
+  var fields=[{l:'Fecha',v:r.fecha},{l:'Unidad',v:r.maquina},{l:'Codigo',v:r.codigo},{l:'Tipo',v:r.tipo},{l:'Estado',v:r.estado},{l:'Supervisor',v:r.supervisor},{l:'Hora Inicio',v:r.horaInicio},{l:'Hora Fin',v:r.horaFin},{l:'Horas de Paro',v:r.horasParo+' h'},{l:'Sale de Planta',v:r.fueraPlanta},{l:'Fecha Retorno',v:r.fechaRetorno},{l:'Proximo Mant.',v:r.proximo},{l:'Repuestos',v:r.repuestos},{l:'Fecha Registro',v:r.fechaReg?r.fechaReg.slice(0,10):'-'},{l:'N Registro',v:r.id}];
+  document.getElementById('detail-fields').innerHTML=fields.map(function(f){return '<div class="detail-field"><div class="df-label">'+f.l+'</div><div class="df-val">'+(f.v||'-')+'</div></div>';}).join('');
+  var motS=document.getElementById('det-motivo-sec');
+  var hasMot=r.motivoCat&&r.motivoCat!=='-';var hasDet=r.motivoDet&&r.motivoDet!=='-'&&r.motivoDet.trim();
+  if(hasMot||hasDet){motS.style.display='block';document.getElementById('det-motivo-cat').textContent=r.motivoCat||'-';document.getElementById('det-motivo-txt').textContent=r.motivoDet||'-';}else{motS.style.display='none';}
+  var obsS=document.getElementById('det-obs-sec');var hasObs=r.obs&&r.obs.trim().length>0;
+  if(hasObs){obsS.style.display='block';var obsEl=document.getElementById('det-obs-txt');obsEl.textContent=r.obs;obsEl.className='obs-display nivel-'+(r.obsNivel||'INFO').toLowerCase();document.getElementById('det-obs-rep').textContent=r.obsRep||'-';document.getElementById('det-obs-jef').textContent=r.obsJef||'-';var nEl=document.getElementById('det-obs-niv');nEl.textContent=r.obsNivel||'INFO';nEl.style.color=r.obsNivel==='CRITICO'?'var(--red)':r.obsNivel==='ADVERTENCIA'?'var(--orange)':'var(--blue)';}else{obsS.style.display='none';}
+  var pS=document.getElementById('det-photos-sec');
+  if(r.fotos&&r.fotos.length){pS.style.display='block';document.getElementById('det-photos-grid').innerHTML=r.fotos.map(function(p){return '<div class="detail-photo"><img src="'+p.data+'" alt="'+p.name+'" style="cursor:pointer" onclick="verFoto(this.src)"></div>';}).join('');}else{pS.style.display='none';}
+  document.getElementById('modal-detail').classList.add('show');
+}
+function closeDetail(){document.getElementById('modal-detail').classList.remove('show');}
+function verFoto(src){window.open(src,'_blank');}
 
 function renderCalendar(){
   var meses=['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
@@ -804,77 +948,25 @@ function renderCalendar(){
   for(var d=1;d<=dim;d++){
     var ds=currentYear+'-'+String(currentMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
     var isT=d===today.getDate()&&currentMonth===today.getMonth()&&currentYear===today.getFullYear();
-    var dr=registros.filter(function(r){return r.fecha===ds||r.proxima===ds;});
-    html+='<div class="cal-day '+(isT?'today':'')+(dr.length?' has-event':'')+'"><div style="font-size:12px;font-weight:'+(isT?700:400)+';margin-bottom:2px">'+d+'</div>'+dr.map(function(r){var cls=r.prioridad==='NORMAL'?'operativa':r.prioridad==='CRÍTICO'?'critico':'';return '<div class="cal-event '+cls+'">'+r.codigo.split(' ')[0]+'</div>';}).join('')+'</div>';
+    var dr=registros.filter(function(r){return r.fecha===ds||r.proximo===ds;});
+    html+='<div class="cal-day '+(isT?'today':'')+(dr.length?' has-event':'')+'"><div style="font-size:12px;font-weight:'+(isT?700:400)+';margin-bottom:2px">'+d+'</div>'+dr.map(function(r){var cls=r.estado==='COMPLETADO'?'done':r.fueraPlanta==='SI'?'out':'';return '<div class="cal-event '+cls+'">'+r.maquina.split(' ')[0]+'</div>';}).join('')+'</div>';
   }
   grid.innerHTML=html;
 }
 function changeMonth(dir){currentMonth+=dir;if(currentMonth>11){currentMonth=0;currentYear++;}if(currentMonth<0){currentMonth=11;currentYear--;}renderCalendar();}
 
-function openDetail(id){
-  var r=registros.find(function(x){return x.id===id;});
-  if(!r)return;
-  document.getElementById('detail-id').textContent=r.id+' — '+r.maquina+' '+r.codigo;
-  var fields=[{l:'Fecha',v:r.fecha},{l:'Unidad',v:r.maquina},{l:'Código/Placa',v:r.codigo},{l:'Conductor',v:r.conductor},{l:'Turno',v:r.turno},{l:'Inspector',v:r.inspector},{l:'Prioridad',v:r.prioridad},{l:'Estado',v:r.estado},{l:'Próx. Inspección',v:r.proxima},{l:'N° Registro',v:r.id},{l:'Fecha Registro',v:r.fechaReg?r.fechaReg.slice(0,10):'-'}];
-  document.getElementById('detail-fields').innerHTML=fields.map(function(f){return '<div class="detail-field"><div class="df-label">'+f.l+'</div><div class="df-val">'+(f.v||'-')+'</div></div>';}).join('');
-  // Criterios
-  if(r.criterios){
-    document.getElementById('det-criterios-sec').style.display='block';
-    var keys=['cs01','cs02','cs03','cs04','cs06','cs07','cs08','cs09','cs10','cs11'];
-    document.getElementById('det-criterios-tbody').innerHTML=keys.map(function(k){var v=r.criterios[k]||'N/A';var cls=v==='B'?'crit-B':v==='R'?'crit-R':v==='M'?'crit-M':'crit-NA';return '<tr><td class="mono">'+k.toUpperCase()+'</td><td>'+CRITERIOS_LABELS[k]+'</td><td class="'+cls+'">'+v+'</td></tr>';}).join('');
-  } else document.getElementById('det-criterios-sec').style.display='none';
-  // Hallazgos
-  var hasH=r.hallazgos&&r.hallazgos!=='-';
-  if(hasH){document.getElementById('det-hallazgos-sec').style.display='block';document.getElementById('det-hallazgos-txt').textContent=r.hallazgos;document.getElementById('det-medidas-txt').textContent=r.medidas||'-';}else{document.getElementById('det-hallazgos-sec').style.display='none';}
-  // Obs
-  var hasObs=r.obs&&r.obs.trim().length>0;
-  if(hasObs){document.getElementById('det-obs-sec').style.display='block';var obsEl=document.getElementById('det-obs-txt');obsEl.textContent=r.obs;obsEl.className='obs-display nivel-'+(r.obsNivel||'INFO').toLowerCase();document.getElementById('det-obs-rep').textContent=r.obsRep||'-';document.getElementById('det-obs-jef').textContent=r.obsJef||'-';var nEl=document.getElementById('det-obs-niv');nEl.textContent=r.obsNivel||'INFO';nEl.style.color=r.obsNivel==='CRITICO'?'var(--red)':r.obsNivel==='ADVERTENCIA'?'var(--orange)':'var(--blue)';}else{document.getElementById('det-obs-sec').style.display='none';}
-  // Photos
-  var pS=document.getElementById('det-photos-sec');
-  if(r.fotos&&r.fotos.length){pS.style.display='block';document.getElementById('det-photos-grid').innerHTML=r.fotos.map(function(p){return '<div class="detail-photo"><img src="'+p.data+'" alt="'+p.name+'" style="cursor:pointer" onclick="verFoto(this.src)"></div>';}).join('');}else{pS.style.display='none';}
-  document.getElementById('modal-detail').classList.add('show');
-}
-function closeDetail(){document.getElementById('modal-detail').classList.remove('show');}
-function verFoto(src){window.open(src,'_blank');}
-
-function handlePhotos(files){Array.from(files).slice(0,5-currentPhotos.length).forEach(function(file){if(!file.type.startsWith('image/'))return;var reader=new FileReader();reader.onload=function(e){currentPhotos.push({name:file.name,data:e.target.result});renderPhotoPreview();};reader.readAsDataURL(file);});}
-function renderPhotoPreview(){var g=document.getElementById('photo-preview'),c=document.getElementById('photo-count');if(!currentPhotos.length){g.innerHTML='';c.textContent='';return;}g.innerHTML=currentPhotos.map(function(p,i){return '<div class="photo-thumb"><img src="'+p.data+'" alt="'+p.name+'"><div class="photo-label">'+p.name+'</div><button class="photo-remove" onclick="removePhoto('+i+')">X</button></div>';}).join('');c.textContent=currentPhotos.length+' fotografía(s) adjunta(s)';}
-function removePhoto(idx){currentPhotos.splice(idx,1);renderPhotoPreview();}
-
-document.addEventListener('DOMContentLoaded',function(){
-  var area=document.getElementById('upload-area');
-  if(area){area.addEventListener('dragover',function(e){e.preventDefault();area.classList.add('dragover');});area.addEventListener('dragleave',function(){area.classList.remove('dragover');});area.addEventListener('drop',function(e){e.preventDefault();area.classList.remove('dragover');handlePhotos(e.dataTransfer.files);});}
-  var md=document.getElementById('modal-detail');
-  if(md)md.addEventListener('click',function(e){if(e.target===this)closeDetail();});
-  document.getElementById('filtro-dia-mes').value=new Date().getMonth();
-  renderDashboard();
-  document.getElementById('loading-overlay').style.display='none';
-});
-
 function exportarExcel(){
   if(!registros.length){showToast('No hay registros','warn');return;}
   if(typeof XLSX==='undefined'){showToast('Cargando...','warn');return;}
   var wb=XLSX.utils.book_new();
-  var datos=registros.map(function(r){return{
-    'N. Registro':r.id,'Fecha':r.fecha,'Unidad':r.maquina,'Código':r.codigo||'-',
-    'Conductor':r.conductor||'-','Turno':r.turno||'-','Inspector':r.inspector||'-',
-    'Prioridad':r.prioridad,'Estado':r.estado,
-    'CS01-Goma':r.criterios?r.criterios.cs01:'-','CS02-Presión':r.criterios?r.criterios.cs02:'-',
-    'CS03-Limpieza':r.criterios?r.criterios.cs03:'-','CS04-Brazo':r.criterios?r.criterios.cs04:'-',
-    'CS06-Velocidad':r.criterios?r.criterios.cs06:'-','CS07-Lavado':r.criterios?r.criterios.cs07:'-',
-    'CS08-Líquido':r.criterios?r.criterios.cs08:'-','CS09-Toberas':r.criterios?r.criterios.cs09:'-',
-    'CS10-Visibilidad':r.criterios?r.criterios.cs10:'-','CS11-Plum.Trasera':r.criterios?r.criterios.cs11:'-',
-    'Hallazgos':r.hallazgos||'-','Medidas':r.medidas||'-','Próx. Inspección':r.proxima||'-',
-    'Observación':r.obs||'-','Nivel Obs.':r.obsNivel||'INFO',
-    'F. Registro':r.fechaReg?r.fechaReg.slice(0,10):'-'
-  };});
+  var datos=registros.map(function(r){return{'N. Registro':r.id,'Fecha':r.fecha,'Unidad':r.maquina,'Codigo':r.codigo||'-','Tipo':r.tipo,'Motivo Cat.':r.motivoCat||'-','Motivo Detalle':r.motivoDet||'-','Supervisor':r.supervisor||'-','H. Inicio':r.horaInicio||'-','H. Fin':r.horaFin||'-','H. Paro':r.horasParo||0,'Fuera Planta':r.fueraPlanta,'F. Retorno':r.fechaRetorno||'-','Estado':r.estado,'Proximo Mant.':r.proximo||'-','Repuestos':r.repuestos||'-','Observacion':r.obs||'-','Nivel Obs.':r.obsNivel||'INFO','F. Registro':r.fechaReg?r.fechaReg.slice(0,10):'-'};});
   var ws1=XLSX.utils.json_to_sheet(datos);
-  ws1['!cols']=[{wch:14},{wch:12},{wch:20},{wch:14},{wch:20},{wch:8},{wch:18},{wch:10},{wch:22},{wch:8},{wch:8},{wch:8},{wch:8},{wch:8},{wch:8},{wch:8},{wch:8},{wch:8},{wch:8},{wch:35},{wch:30},{wch:15},{wch:40},{wch:12},{wch:14}];
-  XLSX.utils.book_append_sheet(wb,ws1,'Inspecciones');
+  ws1['!cols']=[{wch:14},{wch:12},{wch:20},{wch:14},{wch:13},{wch:22},{wch:35},{wch:20},{wch:11},{wch:11},{wch:11},{wch:13},{wch:13},{wch:13},{wch:14},{wch:25},{wch:40},{wch:12},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws1,'Registros');
   var M=['CARGADOR FRONTAL','TRACTOR','CISTERNA','BARREDORA','VOLQUETE'];
-  var ws2=XLSX.utils.json_to_sheet(M.map(function(m){var regs=registros.filter(function(r){return r.maquina===m;});return{'Unidad':m,'Inspecciones':regs.length,'Críticas':regs.filter(function(r){return r.prioridad==='CRÍTICO';}).length,'Urgentes':regs.filter(function(r){return r.prioridad==='URGENTE';}).length,'Operativas':regs.filter(function(r){return r.prioridad==='NORMAL';}).length};}));
-  XLSX.utils.book_append_sheet(wb,ws2,'Por Unidad');
-  XLSX.writeFile(wb,'Plumillas_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  var ws2=XLSX.utils.json_to_sheet(M.map(function(m){var regs=registros.filter(function(r){return r.maquina===m;});return{'Maquina':m,'Intervenciones':regs.length,'Horas Paro':parseFloat(regs.reduce(function(s,r){return s+(r.horasParo||0);},0).toFixed(1)),'Salidas Taller':regs.filter(function(r){return r.fueraPlanta==='SI';}).length,'Completados':regs.filter(function(r){return r.estado==='COMPLETADO';}).length};}));
+  XLSX.utils.book_append_sheet(wb,ws2,'Por Maquina');
+  XLSX.writeFile(wb,'Mantenimiento_'+new Date().toISOString().slice(0,10)+'.xlsx');
   showToast('Excel exportado correctamente');
 }
 
